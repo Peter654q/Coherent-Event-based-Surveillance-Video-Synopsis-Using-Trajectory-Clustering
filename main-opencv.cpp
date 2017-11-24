@@ -12,6 +12,7 @@
 #include <fstream>
 #include <math.h>
 #include <unistd.h>
+#include "opencv2/imgproc/imgproc.hpp"
 
 #include "vibe-background-sequential.h"
 
@@ -20,6 +21,8 @@ using namespace std;
 
 /** Function Headers */
 void processVideo(char* videoFilename,bool saveImages,bool showBB);
+void saveBGimages(bool buildBG, int frameNumber, Mat frame, Mat seg, Mat mor);
+Mat doMorphological(Mat seg);
 
 /**
  * Displays instructions on how to use this program.
@@ -71,8 +74,7 @@ int main(int argc, char* argv[])
 					cout<<"show bounding boxes"<<endl;
 					showBB = true;
 		      break;
-		  }
-			
+		  }	
 	}
 
   processVideo(argv[argc-1],saveImages,showBB);
@@ -115,7 +117,8 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB)
   /*build the background model until frame 3000. */
   bool buildBG = false;
   int frameToRestart = 3000; 
-
+  /* use for mean-shift tracking */
+  Mat pre_frame;
   /* Read input data. ESC or 'q' for quitting. */
   while ((char)keyboard != 'q' && (char)keyboard != 27) {
     /* Read the current frame. */
@@ -154,20 +157,10 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB)
        is a 5x5 median filter. */
     medianBlur(segmentationMap, segmentationMap, 3); /* 3x3 median filtering */
     
-    /*morphological operation*/
+
 	Mat morphological;
-	//clean the noisies	
-	erode(segmentationMap,morphological,Mat());
-	erode(morphological,morphological,Mat());
-	dilate(morphological,morphological,Mat());
-	dilate(morphological,morphological,Mat());
-
-	//fill up the yellow line
-	for(int x=0;x<6;x++)
-		dilate(morphological,morphological,Mat());
-	for(int x=0;x<6;x++)
-		erode(morphological,morphological,Mat());
-
+    morphological = doMorphological(segmentationMap);//clean the noisies
+	
 	Mat labelImage;
 	Mat stats, centroids;
 	int nLabels=0;
@@ -194,18 +187,18 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB)
 
     Mat copyframe;//for imageROI
     frame.copyTo(copyframe);
-	for(int label = 1; label < nLabels; ++label){
+	for(int label = 1; label < nLabels; ++label){ // 2 = nLabels
         //object's left, top, width, height
     	int left = stats.at<int>(label, CC_STAT_LEFT);
 		int top = stats.at<int>(label, CC_STAT_TOP);
 		int width = stats.at<int>(label, CC_STAT_WIDTH);
 		int height = stats.at<int>(label, CC_STAT_HEIGHT);
         //area threshold = 450
-		if (stats.at<int>(label,CC_STAT_AREA)>450){
+		if (stats.at<int>(label,CC_STAT_AREA)>350){
             bool_obj=true;
             //draw rectangle
-				if (showBB == true)
-	    		rectangle(frame, Point(left-3, top-18), Point(left+width+3, top+height+3), Scalar(0,0,255), 3, 8, 0);
+			if (showBB == true)
+	    		rectangle(frame, Point(left-3, top-18), Point(left+width+3, top+height+3), Scalar(0,0,255), 3, 8, 0); // add bias for the disappear helmets
 			if(buildBG){
 		  		//output object jpg file
 				Mat imageROI;		
@@ -220,9 +213,9 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB)
 		        string str1 = ss1.str();
 				if (saveImages == true)
 		        	imwrite(str1, imageROI);
-
+					
 		        //ouput object information txt file
-			/*
+			    
 		        fstream fp;
 		        stringstream ss2;
 		        ss2 << "F" << frameNumber << ".txt";
@@ -236,7 +229,7 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB)
 		        fp << height << endl;
 		        fp << stats.at<int>(label,cv::CC_STAT_AREA) << endl;
 		        fp << centroids.at<double>(label, 0) << endl; 
-			fp << centroids.at<double>(label, 1) << endl << endl;*/
+			    fp << centroids.at<double>(label, 1) << endl << endl;
 			}
      }//end if
 	}//end for
@@ -246,35 +239,15 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB)
         writer.write(frame);
     }
 
-
     /* Shows the current frame and the segmentation map. */
     imshow("Frame", frame);
     imshow("Segmentation by ViBe", segmentationMap);//output ViBe image
     imshow("morphological_op", morphological);//after morphological operation
     //imshow("Label Image", objImage);
 	
-	// save background images
-	if (buildBG && (frameNumber % 1) == 0) { 
-		//cout << "Frame number = " << frameNumber << endl;
-		
-		//output jpg files
-		stringstream ss1;
-        ss1 <<"BG_"<< frameNumber << ".jpg";
-        string str1 = ss1.str();
-		imwrite(str1, frame);
-        /*
-		stringstream ss2;
-        ss2 << frameNumber << "SO.jpg";
-        string str2 = ss2.str();
-		imwrite(str2, segmentationMap);
-
-		stringstream ss3;
-        ss3 << frameNumber << "M.jpg";
-        string str3 = ss3.str();
-		imwrite(str3, morphological);
-        */
-	}
 	
+    saveBGimages(buildBG, frameNumber, frame, segmentationMap, morphological);//save background images
+	pre_frame = frame.clone();
     ++frameNumber;
 
     /* Gets the input from the keyboard. */
@@ -287,3 +260,45 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB)
   /* Frees the model. */
   libvibeModel_Sequential_Free(model);
 }
+
+void saveBGimages(bool buildBG, int frameNumber, Mat frame, Mat seg, Mat mor){
+	if (buildBG && (frameNumber % 1) == 0) { 
+		//cout << "Frame number = " << frameNumber << endl;
+		
+		//output jpg files
+		stringstream ss1;
+        ss1 <<"BG_"<< frameNumber << ".jpg";
+        string str1 = ss1.str();
+		//imwrite(str1, frame);//save images
+        /*
+		stringstream ss2;
+        ss2 << frameNumber << "SO.jpg";
+        string str2 = ss2.str();
+		imwrite(str2, seg);
+
+		stringstream ss3;
+        ss3 << frameNumber << "M.jpg";
+        string str3 = ss3.str();
+		imwrite(str3, mor);
+        */
+	}
+}
+
+Mat doMorphological(Mat seg){
+    Mat mor;
+    erode(seg,mor,Mat());
+	erode(mor,mor,Mat());
+	dilate(mor,mor,Mat());
+	dilate(mor,mor,Mat());
+
+	//fill up the yellow line
+	for(int x=0;x<6;x++)
+		dilate(mor,mor,Mat());
+	for(int x=0;x<6;x++)
+		erode(mor,mor,Mat());
+
+    return mor;
+}
+
+
+
