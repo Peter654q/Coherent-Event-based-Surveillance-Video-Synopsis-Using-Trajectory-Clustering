@@ -31,6 +31,7 @@ int main(){
 			string str2 = ss2.str();
 			fp2.open(str2.c_str(), ios::in);
 			if(!fp2){
+				cout << frameNumber << " " << counts_obj << " ";
 				while(true){
 					frameNumber++;
 					fstream fp2;
@@ -71,7 +72,7 @@ int main(){
 
 				double nearest[2];
 				for(int j=0;j<20;j++){
-					nearest[0] = 20;
+					nearest[0] = 10000;
 					nearest[1] = 10000;
 					for(int i=0;i<20;i++){
 						if( array1[i][5]!=0 && array2[j][5]!=0 ){
@@ -82,7 +83,7 @@ int main(){
 							}
 						}					
 					}
-					if (nearest[0] == 20)
+					if (nearest[0] == 10000)
 						break;
 					//cout << nearest[0] << " ";	
 					if(nearest[1]>150){
@@ -90,8 +91,8 @@ int main(){
 						for(int i=1;i<8;i++)
 							out[j][i] = array2[j][i];
 						counts_obj++;
+						cout << frameNumber << " " << counts_obj << endl;
 					}else{
-						
 						out[j][0] = nearest[0];
 						for(int i=1;i<8;i++)
 							out[j][i] = array2[j][i];
@@ -107,9 +108,10 @@ int main(){
 							double compare_onum = out[p][0];
 							if(now_onum == compare_onum){
 								double dist = sqrt(pow((out[j][7] - out[p][7]),2) + pow((out[j][6] - out[p][6]),2));
-								if( dist>30){
+								if( dist>100){
 									out[j][0] = counts_obj;
 									counts_obj++;
+									cout << frameNumber << " " << counts_obj << endl;
 								}
 							}
 						}
@@ -158,6 +160,5 @@ int init(int fn, int c_o){
             fp_out << tmp << endl;
         }
     }
-    
     return c_obj;
 }
