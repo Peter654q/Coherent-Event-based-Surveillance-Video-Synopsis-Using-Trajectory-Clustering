@@ -135,8 +135,8 @@ int main (void)
                 {   
                     measurement[i]->data.fl[0]=(float)prediction->data.fl[0];  
                     measurement[i]->data.fl[1]=(float)prediction->data.fl[1];
-                    obj_status[i][2] =(float)prediction->data.fl[0]; 
-                    obj_status[i][3] =(float)prediction->data.fl[1];
+                    obj_status[i][2] =(float)prediction->data.fl[0]*1.1; 
+                    obj_status[i][3] =(float)prediction->data.fl[1]*1.1;
                     predict=true;
                 } 
                 else
@@ -148,12 +148,19 @@ int main (void)
                 cvKalmanCorrect( kalman[i], measurement[i] );
                 if(predict)
                 	circle(img, predict_pt, 5, CV_RGB(255,255,255),3);
-                else
-                    circle(img,predict_pt, 5, CV_RGB(0,255,0),3);
+                else{
+                    int obj_num = obj_status[i][0];
+                    int b = (obj_num*23)%200+55;
+                    int g = (obj_num*34)%200+55;
+                    int r = (obj_num*45)%200+55;
+                    circle(img,predict_pt, 5, CV_RGB(b ,g, r),3);
+                }
 
                 
-
-                imshow("kalman", img);
+                if (!img.empty()) {
+    				imshow("kalman", img);
+				}
+                
             }
 
         }
