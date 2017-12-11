@@ -13,9 +13,10 @@ const int winWidth=1920;
 int main (void)  
 {  
     Mat img=imread("BG.jpg",CV_LOAD_IMAGE_UNCHANGED);// Background img
-    double obj_status[20][4] = {0};//Object array:obj_num, last_frame, (x,y)
+    double obj_status[20][5] = {0};//Object array:obj_num, last_frame, (x,y) , live time
     for(int i=0;i<20;i++){
         obj_status[i][0] = -1;//-1 for no objs
+        obj_status[i][4] = 0;
     }
     //init value
     const int stateNum=4;  
@@ -70,13 +71,14 @@ int main (void)
                     obj_status[i][1]=tmp[1];
                     obj_status[i][2]=tmp[2];
                     obj_status[i][3]=tmp[3];
+                    obj_status[i][4]++;
                     compare = true;
                 }
             }
             if(!compare){
                 double min_dist = 999.9;
                 int min_index = -1;
-                double thresh = 50.0;
+                double dist_thresh = 60.0;
                 for (int j=0;j<20;j++){
                     if (obj_status[j][0] != -1){
                         double dist = pow(pow((obj_status[j][2] - tmp[2]), 2) + pow((obj_status[j][3]-tmp[3]), 2), 0.5);// L2 distance
@@ -86,19 +88,20 @@ int main (void)
                         }
                     }
                 }
-                if (min_dist < thresh){
+                if (min_dist < dist_thresh){//match the old obj
                     obj_status[min_index][0] = tmp[0];
                     obj_status[min_index][1] = tmp[1];
                     obj_status[min_index][2] = tmp[2];
                     obj_status[min_index][3] = tmp[3];
-                }else{
+                    obj_status[min_index][4]++;
+                }else{//new obj
                     for(int i=0;i<20;i++){
                         if(obj_status[i][0] == -1){
                             obj_status[i][0] = tmp[0];
                             obj_status[i][1] = tmp[1];
                             obj_status[i][2] = tmp[2];
                             obj_status[i][3] = tmp[3];
-
+                            obj_status[i][4] = 1;
                             //1.kalman filter setup 
                             //init kalman
                             kalman[i] = cvCreateKalman( stateNum, measureNum, 0 );//state(x,y,detaX,detaY)
@@ -133,6 +136,7 @@ int main (void)
                 CvPoint predict_pt=cvPoint((int)prediction->data.fl[0],(int)prediction->data.fl[1]);
                 if (obj_status[i][1] != frame_number)
                 {   
+                	//int ratio = (obj_status[i][3]/1080*0.2)+1.0;
                     measurement[i]->data.fl[0]=(float)prediction->data.fl[0];  
                     measurement[i]->data.fl[1]=(float)prediction->data.fl[1];
                     obj_status[i][2] =(float)prediction->data.fl[0]*1.1; 
@@ -146,9 +150,9 @@ int main (void)
                 }
                 //3. update
                 cvKalmanCorrect( kalman[i], measurement[i] );
-                if(predict)
+                if(predict && obj_status[i][4]>5)
                 	circle(img, predict_pt, 5, CV_RGB(255,255,255),3);
-                else{
+                else if(!predict){
                     int obj_num = obj_status[i][0];
                     int b = (obj_num*23)%200+55;
                     int g = (obj_num*34)%200+55;
