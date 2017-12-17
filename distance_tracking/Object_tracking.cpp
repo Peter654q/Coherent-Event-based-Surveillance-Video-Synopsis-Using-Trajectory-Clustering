@@ -10,7 +10,7 @@ int main(){
 	double array1[20][8];
 	double array2[20][8];
 	double out[20][8];
-	int frame = 1999;
+	int frame = 9000;
 	int counts_obj=0;
     
     counts_obj = init(25, counts_obj);
@@ -26,7 +26,7 @@ int main(){
 
 			fstream fp2;
 			stringstream ss2;
-			ss2 << "F" << frameNumber << ".txt";
+			ss2 << "../txt/F" << frameNumber << ".txt";
 			//ss2 << "F56.txt";
 			string str2 = ss2.str();
 			fp2.open(str2.c_str(), ios::in);
@@ -36,7 +36,7 @@ int main(){
 					frameNumber++;
 					fstream fp2;
 					stringstream ss2;
-					ss2 << "F" << frameNumber << ".txt";
+					ss2 << "../txt/F" << frameNumber << ".txt";
 					//ss2 << "F56.txt";
 					string str2 = ss2.str();
 					fp2.open(str2.c_str(), ios::in);
@@ -108,7 +108,7 @@ int main(){
 							double compare_onum = out[p][0];
 							if(now_onum == compare_onum){
 								double dist = sqrt(pow((out[j][7] - out[p][7]),2) + pow((out[j][6] - out[p][6]),2));
-								if( dist>100){
+								if( dist>200){
 									out[j][0] = counts_obj;
 									counts_obj++;
 									cout << frameNumber << " " << counts_obj << endl;
@@ -141,7 +141,7 @@ int init(int fn, int c_o){
     int c_obj=c_o;
     fstream fp_in;
     stringstream ss1;
-	ss1 << "F" << fn << ".txt";
+	ss1 << "../txt/F" << fn << ".txt";
 	string str1 = ss1.str();
 	fp_in.open(str1.c_str(), ios::in);
 

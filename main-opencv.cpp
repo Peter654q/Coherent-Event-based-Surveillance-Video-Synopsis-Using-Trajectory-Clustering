@@ -218,7 +218,7 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB)
 			    
 		        fstream fp;
 		        stringstream ss2;
-		        ss2 << "F" << frameNumber << ".txt";
+		        ss2 << "txt/F" << frameNumber << ".txt";
 		        string str2 = ss2.str();
 		        
 		        fp.open(str2.c_str(), ios::out|ios::app);

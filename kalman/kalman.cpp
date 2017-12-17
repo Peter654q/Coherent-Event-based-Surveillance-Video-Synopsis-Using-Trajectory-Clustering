@@ -33,13 +33,13 @@ int main (void)
     
 
     int txt_start=25;
-    int txt_end = 1998;
+    int txt_end = 13157;
     
 
     for(int frame_number = txt_start; frame_number < txt_end+1; frame_number++){
         fstream f_in;
         stringstream ss;
-        ss << "txt/F_out" << frame_number << ".txt";
+        ss << "../distance_tracking/out/F_out" << frame_number << ".txt";
         string str = ss.str();
         f_in.open(str.c_str(), ios::in);
         if(!f_in){
@@ -47,10 +47,11 @@ int main (void)
             {
                 frame_number++;
                 stringstream ss;
-                ss << "txt/F_out" << frame_number << ".txt";
+                ss << "../distance_tracking/out/F_out" << frame_number << ".txt";
                 string str = ss.str();
                 f_in.open(str.c_str(), ios::in);
                 if(f_in)
+                	img=imread("BG.jpg",CV_LOAD_IMAGE_UNCHANGED);
                     break;
             }
         }
@@ -89,7 +90,7 @@ int main (void)
                     }
                 }
                 if (min_dist < dist_thresh){//match the old obj
-                    obj_status[min_index][0] = tmp[0];
+                    //obj_status[min_index][0] = tmp[0];
                     obj_status[min_index][1] = tmp[1];
                     obj_status[min_index][2] = tmp[2];
                     obj_status[min_index][3] = tmp[3];
@@ -150,7 +151,7 @@ int main (void)
                 }
                 //3. update
                 cvKalmanCorrect( kalman[i], measurement[i] );
-                if(predict && obj_status[i][4]>5)
+                if(predict && obj_status[i][4]>20)
                 	circle(img, predict_pt, 5, CV_RGB(255,255,255),3);
                 else if(!predict){
                     int obj_num = obj_status[i][0];
@@ -169,9 +170,13 @@ int main (void)
 
         }
 
-        char key=(char)cvWaitKey(30);  
-        if (key==27){//esc     
-            break;     
+        char key=(char)cvWaitKey(10);//s(S) to stop and start  
+        if (key==83 || key==115){    
+        	while(true){
+        		char key=(char)cvWaitKey(30);
+        		if (key==83 || key==115)
+        			break;
+        	}     
         } 
   	}
 
