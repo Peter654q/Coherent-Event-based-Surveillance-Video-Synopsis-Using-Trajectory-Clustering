@@ -20,7 +20,7 @@ using namespace cv;
 using namespace std;
 
 /** Function Headers */
-void processVideo(char* videoFilename,bool saveImages,bool showBB);
+void processVideo(char* videoFilename,bool saveImages,bool showBB, bool saveTxt);
 void saveBGimages(bool buildBG, int frameNumber, Mat frame, Mat seg, Mat mor);
 Mat doMorphological(Mat seg);
 
@@ -61,8 +61,9 @@ int main(int argc, char* argv[])
 	
 	bool saveImages = false;
 	bool showBB = false;
+	bool saveTxt = false;
 	char c;
-	while((c=getopt(argc, argv, "sr")) != -1)
+	while((c=getopt(argc, argv, "srt")) != -1)
 	{
 		  switch(c)
 		  {
@@ -74,10 +75,14 @@ int main(int argc, char* argv[])
 					cout<<"show bounding boxes"<<endl;
 					showBB = true;
 		      break;
+		  case 't':
+					cout<<"save txt files"<<endl;
+					saveTxt = true;
+		      break;
 		  }	
 	}
 
-  processVideo(argv[argc-1],saveImages,showBB);
+  processVideo(argv[argc-1],saveImages,showBB , saveTxt);
 
   /* Destroy GUI windows. */
   destroyAllWindows();
@@ -89,7 +94,7 @@ int main(int argc, char* argv[])
  *
  * @param videoFilename  The name of the input video file. 
  */
-void processVideo(char* videoFilename,bool saveImages,bool showBB)
+void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt)
 { 
   /* Create the capture object. */
   VideoCapture capture(videoFilename);
@@ -199,7 +204,7 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB)
             //draw rectangle
 			if (showBB == true)
 	    		rectangle(frame, Point(left-3, top-18), Point(left+width+3, top+height+3), Scalar(0,0,255), 3, 8, 0); // add bias for the disappear helmets
-			if(buildBG){
+			if(buildBG && saveTxt){
 		  		//output object jpg file
 				Mat imageROI;		
 				if(top>=15){
@@ -218,7 +223,7 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB)
 			    
 		        fstream fp;
 		        stringstream ss2;
-		        ss2 << "txt/F" << frameNumber << ".txt";
+		        ss2 << "txt05/F" << frameNumber << ".txt";
 		        string str2 = ss2.str();
 		        
 		        fp.open(str2.c_str(), ios::out|ios::app);
