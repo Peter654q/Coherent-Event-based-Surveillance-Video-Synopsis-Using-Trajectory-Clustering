@@ -10,7 +10,7 @@ int main(){
 	double array1[20][8];
 	double array2[20][8];
 	double out[20][8];
-	int frame = 9000;
+	int frame = 9335;
 	int counts_obj=0;
     
     counts_obj = init(25, counts_obj);

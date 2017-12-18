@@ -33,8 +33,10 @@ int main (void)
     
 
     int txt_start=25;
-    int txt_end = 13157;
+    int txt_end = 9334;
     
+    fstream f_out;
+    f_out.open("kalman_trajectory.txt", ios::out|ios::app);
 
     for(int frame_number = txt_start; frame_number < txt_end+1; frame_number++){
         fstream f_in;
@@ -129,7 +131,7 @@ int main (void)
         }
 
         //2.kalman prediction
-        
+        f_out << "-2" << " " << frame_number << endl;// -2=framenumber
         for (int i=0 ; i<20; i++){
             bool predict=false;
             if(obj_status[i][0] != -1){
@@ -151,33 +153,43 @@ int main (void)
                 }
                 //3. update
                 cvKalmanCorrect( kalman[i], measurement[i] );
-                if(predict && obj_status[i][4]>20)
-                	circle(img, predict_pt, 5, CV_RGB(255,255,255),3);
+                if(predict && obj_status[i][4]>20){
+                    int obj_num = obj_status[i][0];
+                    int b = (obj_num*23)%200+55;
+                    int g = (obj_num*34)%200+55;
+                    int r = (obj_num*45)%200+55;
+                    circle(img,predict_pt, 5, CV_RGB(b ,g, r),3);
+                    f_out << obj_num << " " << predict_pt.x << " " << predict_pt.y << endl;//if predict, output obj_num = -1
+                    //circle(img,predict_pt, 5, CV_RGB(255 ,255, 255),3);
+                    //f_out << "-1" << " " << predict_pt.x << " " << predict_pt.y << endl;
+                }
                 else if(!predict){
                     int obj_num = obj_status[i][0];
                     int b = (obj_num*23)%200+55;
                     int g = (obj_num*34)%200+55;
                     int r = (obj_num*45)%200+55;
                     circle(img,predict_pt, 5, CV_RGB(b ,g, r),3);
+                    f_out << obj_num << " " << predict_pt.x << " " << predict_pt.y << endl;//if not predict, output obj_num
                 }
 
                 
                 if (!img.empty()) {
-    				imshow("kalman", img);
+    				//imshow("kalman", img);
 				}
                 
             }
 
         }
 
-        char key=(char)cvWaitKey(10);//s(S) to stop and start  
+        char key=(char)cvWaitKey(1);//s(S) to stop and start  
         if (key==83 || key==115){    
         	while(true){
         		char key=(char)cvWaitKey(30);
         		if (key==83 || key==115)
         			break;
         	}     
-        } 
+        }
+
   	}
 
     //cvReleaseImage(&img);  
