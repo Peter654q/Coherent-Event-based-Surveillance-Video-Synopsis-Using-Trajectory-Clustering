@@ -13,7 +13,7 @@ const int winWidth=1920;
 int main (void)  
 {  
     Mat img=imread("BG.jpg",CV_LOAD_IMAGE_UNCHANGED);// Background img
-    double obj_status[20][5] = {0};//Object array:obj_num, last_frame, (x,y) , live time
+    double obj_status[20][7] = {0};//Object array:obj_num, last_frame, (x,y) , live time ,width ,height
     for(int i=0;i<20;i++){
         obj_status[i][0] = -1;//-1 for no objs
         obj_status[i][4] = 0;
@@ -58,11 +58,14 @@ int main (void)
             }
         }
         int trash;
-        double tmp[4];//obj_num, last_frame, (x,y)
+        double tmp[6];//obj_num, last_frame, (x,y) , width , height
         while(f_in >> tmp[0]){
-            for(int i=0;i<5;i++){
+            for(int i=0;i<2;i++){
                 f_in >> trash;
             }
+            f_in >> tmp[4];
+            f_in >> tmp[5];
+            f_in >> trash;
             tmp[1] = frame_number;
             f_in >> tmp[2];
             f_in >> tmp[3];
@@ -75,6 +78,8 @@ int main (void)
                     obj_status[i][2]=tmp[2];
                     obj_status[i][3]=tmp[3];
                     obj_status[i][4]++;
+                    obj_status[i][5]=tmp[4];
+                    obj_status[i][6]=tmp[5];
                     compare = true;
                 }
             }
@@ -97,6 +102,8 @@ int main (void)
                     obj_status[min_index][2] = tmp[2];
                     obj_status[min_index][3] = tmp[3];
                     obj_status[min_index][4]++;
+                    obj_status[min_index][5]=tmp[4];
+                    obj_status[min_index][6]=tmp[5];
                 }else{//new obj
                     for(int i=0;i<20;i++){
                         if(obj_status[i][0] == -1){
@@ -105,6 +112,8 @@ int main (void)
                             obj_status[i][2] = tmp[2];
                             obj_status[i][3] = tmp[3];
                             obj_status[i][4] = 1;
+                            obj_status[i][5]=tmp[4];
+                            obj_status[i][6]=tmp[5];
                             //1.kalman filter setup 
                             //init kalman
                             kalman[i] = cvCreateKalman( stateNum, measureNum, 0 );//state(x,y,detaX,detaY)
@@ -159,7 +168,7 @@ int main (void)
                     int g = (obj_num*34)%200+55;
                     int r = (obj_num*45)%200+55;
                     circle(img,predict_pt, 5, CV_RGB(b ,g, r),3);
-                    f_out << obj_num << " " << predict_pt.x << " " << predict_pt.y << endl;//if predict, output obj_num = -1
+                    f_out << obj_num << " " << predict_pt.x << " " << predict_pt.y <<" " << obj_status[i][5]<< " " << obj_status[i][6]<< endl;//if predict, output obj_num = -1
                     //circle(img,predict_pt, 5, CV_RGB(255 ,255, 255),3);
                     //f_out << "-1" << " " << predict_pt.x << " " << predict_pt.y << endl;
                 }
@@ -169,26 +178,26 @@ int main (void)
                     int g = (obj_num*34)%200+55;
                     int r = (obj_num*45)%200+55;
                     circle(img,predict_pt, 5, CV_RGB(b ,g, r),3);
-                    f_out << obj_num << " " << predict_pt.x << " " << predict_pt.y << endl;//if not predict, output obj_num
+                    f_out << obj_num << " " << predict_pt.x << " " << predict_pt.y <<" " << obj_status[i][5]<< " " << obj_status[i][6]<< endl;//if not predict, output obj_num
                 }
 
                 
                 if (!img.empty()) {
     				//imshow("kalman", img);
 				}
-                
+                char key=(char)cvWaitKey(1);//s(S) to stop and start  
+                if (key==83 || key==115){    
+                    while(true){
+                        char key=(char)cvWaitKey(30);
+                        if (key==83 || key==115)
+                            break;
+                    }     
+                }
             }
 
         }
 
-        char key=(char)cvWaitKey(1);//s(S) to stop and start  
-        if (key==83 || key==115){    
-        	while(true){
-        		char key=(char)cvWaitKey(30);
-        		if (key==83 || key==115)
-        			break;
-        	}     
-        }
+        
 
   	}
 
