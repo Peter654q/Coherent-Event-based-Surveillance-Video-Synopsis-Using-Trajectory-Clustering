@@ -257,7 +257,16 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
     ++frameNumber;
 
     /* Gets the input from the keyboard. */
+
     keyboard = waitKey(1);
+
+    if (keyboard==83 || keyboard==115){    
+        while(true){
+            char keyboard=(char)cvWaitKey(30);
+            if (keyboard==83 || keyboard==115)
+                break;
+        }     
+    }//press S or s can pause
   }
 
   /* Delete capture object. */
