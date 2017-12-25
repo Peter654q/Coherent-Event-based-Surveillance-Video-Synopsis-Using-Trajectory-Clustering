@@ -1,5 +1,5 @@
 1. main-opencv.cpp
-檔名：FXXX.txt
+檔名：FXXX.txt (放在txt內)
 連接法做完的label
 bounding box left
 bounding box top 
@@ -11,7 +11,7 @@ bounding box height
 
 2. Object_tracking.cpp
 (其輸入為main-opencv.cpp的輸出，和Object_tracking.cpp的輸出)
-檔名：F_outXXX.txt
+檔名：F_outXXX.txt (放在distance_tracking/out內)
 初步比較的物體編號
 bounding box left
 bounding box top 
@@ -23,7 +23,7 @@ bounding box height
 
 3.kalman.cpp
 (其輸入為Object_tracking.cpp的輸出)
-檔名：kalman_trajectory.txt(所有物體軌跡都在裏面)
+檔名：kalman_trajectory.txt(所有物體軌跡都在裏面，放在kalman內)
 -2 (代表後面接framenumber) frame_number
 物體編號 預測x 預測y 物體寬 物體高
 
