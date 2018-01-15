@@ -43,39 +43,27 @@ int main(){
       	if(frame_count==txt_frame){
       		int tmp;
       		int obj_cnt=0;
-      		int obj, x, y;
+      		int obj, x, y, rect_w, rect_h;
       		while(fin >> tmp){
       			if(tmp==(-2))
       				break;
       			obj = tmp;
-      			fin >> x >> y;
-      			
+      			fin >> x >> y >> rect_w >> rect_h;
+                rect_w = rect_w + 40;
+                rect_h = rect_h + 40;
+                x = x - (rect_w/2);
+                y = y - (rect_h/2);
+      			if(x+rect_w>videoSize.width)
+                    rect_w = videoSize.width - x;
+                if(y+rect_h>videoSize.height)
+                    rect_h = videoSize.height - y;
       			if(x>0 && y>0 && x<videoSize.width && y<videoSize.height){
-      				int rect_w, rect_h;
-      				if(videoSize.width-x > 200){
-      					rect_w = 200;
-      				}else{
-      					rect_w = videoSize.width-x;
-      				}
-      				if(videoSize.height-y > 200){
-      					rect_h = 200;
-      				}else{
-      					rect_h = videoSize.height-y;
-      				}
-      				if(x>(rect_w/2))
-      					x = x-(rect_w/2);
-      				else
-      					x=0;
-      				if(y>(rect_h/2))
-      					y = y-(rect_h/2);
-      				else
-      					y=0;
       				//cout << rect_w << " " << rect_h << endl;
       				Mat obj_frame = videoFrame(Rect(x, y, rect_w, rect_h));
       				stringstream ss1;
 		        	ss1 << "obj/F" << frame_count << "_o" << obj << ".jpg";
 		        	string str1 = ss1.str();
-		        	//imwrite(str1, obj_frame);
+		        	imwrite(str1, obj_frame);
 		        	frame_obj[frame_count][obj_cnt][0] = obj;
 		        	frame_obj[frame_count][obj_cnt][1] = x;
 		        	frame_obj[frame_count][obj_cnt][2] = y;
@@ -111,7 +99,7 @@ int main(){
     for(int frame=1;frame<frame_end;frame++){
     	Mat BG = imread("BG.jpg",CV_LOAD_IMAGE_UNCHANGED);
     	//new a obj every 5 frame
-    	if(frame%30==1 && appear_obj_cnt<10){
+    	if(frame%10==1 && appear_obj_cnt<10){
     		appear_obj_cnt++;
     		int index=0;
     		while(true){

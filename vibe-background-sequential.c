@@ -626,8 +626,7 @@ int32_t libvibeModel_Sequential_AllocInit_8u_C3R(
 int32_t libvibeModel_Sequential_Segmentation_8u_C3R(
   vibeModel_Sequential_t *model,
   const uint8_t *image_data,
-  uint8_t *segmentation_map,
-  uint8_t *background_img
+  uint8_t *segmentation_map
 ) {
   /* Basic checks. */
   assert((image_data != NULL) && (model != NULL) && (segmentation_map != NULL));
@@ -646,7 +645,6 @@ int32_t libvibeModel_Sequential_Segmentation_8u_C3R(
 
   /* Segmentation. */
   memset(segmentation_map, matchingNumber - 1, width * height);
-  memset(background_img, 0, width * height*3);
 
   /* First history Image structure. */
   uint8_t *first = historyImage;
@@ -659,9 +657,6 @@ int32_t libvibeModel_Sequential_Segmentation_8u_C3R(
       )
     )
       segmentation_map[index] = matchingNumber;
-    	background_img[3 * index] = first[3 * index];
-    	background_img[3 * index + 1] = first[3 * index + 1];
-    	background_img[3 * index + 2] = first[3 * index + 2];
   }
 
   /* Next historyImages. */
@@ -726,7 +721,6 @@ int32_t libvibeModel_Sequential_Segmentation_8u_C3R(
   for (uint8_t *mask = segmentation_map; mask < segmentation_map + (width * height); ++mask)
     if (*mask > 0) *mask = COLOR_FOREGROUND;
 
-  //printf("%lu\n", &first);
   return(0);
 }
 
