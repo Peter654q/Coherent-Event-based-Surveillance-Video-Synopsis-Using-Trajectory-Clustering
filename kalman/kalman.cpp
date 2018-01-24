@@ -38,7 +38,11 @@ int main (void)
     fstream f_out;
     f_out.open("kalman_trajectory.txt", ios::out|ios::app);
 
+    int check_array[61][20][6] = {0};//check for prediction points and noises
+    int pointer = 0;
+    int obj_counter = 0;
     for(int frame_number = txt_start; frame_number < txt_end+1; frame_number++){
+    	pointer = (frame_number - txt_start)%61;
         fstream f_in;
         stringstream ss;
         ss << "../distance_tracking/out/F_out" << frame_number << ".txt";
@@ -52,9 +56,10 @@ int main (void)
                 ss << "../distance_tracking/out/F_out" << frame_number << ".txt";
                 string str = ss.str();
                 f_in.open(str.c_str(), ios::in);
-                if(f_in)
+                if(f_in){
                 	img=imread("BG.jpg",CV_LOAD_IMAGE_UNCHANGED);
                     break;
+                }
             }
         }
         int trash;
@@ -140,7 +145,7 @@ int main (void)
         }
 
         //2.kalman prediction
-        f_out << "-2" << " " << frame_number << endl;// -2=framenumber
+        //f_out << "-2" << " " << frame_number << endl;// -2=framenumber
         for (int i=0 ; i<20; i++){
             bool predict=false;
             if(obj_status[i][0] != -1){
@@ -172,9 +177,15 @@ int main (void)
                     int g = 255;
                     int r = 255;
                     circle(img,predict_pt, 5, CV_RGB(b ,g, r),3);
-                    f_out << "-1 "<<obj_num << " " << predict_pt.x << " " << predict_pt.y <<" " << obj_status[i][5]<< " " << obj_status[i][6]<< endl;//if predict, output obj_num = -1
+                    //f_out <<obj_num << " " << predict_pt.x << " " << predict_pt.y <<" " << obj_status[i][5]<< " " << obj_status[i][6]<< endl;//if predict, output obj_num = -1
                     //circle(img,predict_pt, 5, CV_RGB(255 ,255, 255),3);
-                    //f_out << "-1" << " " << predict_pt.x << " " << predict_pt.y << endl;
+                    check_array[pointer][i][0] = -1;
+                    check_array[pointer][i][1] = obj_num;
+                    check_array[pointer][i][2] = predict_pt.x;
+                    check_array[pointer][i][3] = predict_pt.y;
+                    check_array[pointer][i][4] = obj_status[i][5];
+                    check_array[pointer][i][5] = obj_status[i][6];
+
                 }
                 else if(!predict){
                     int obj_num = obj_status[i][0];
@@ -182,12 +193,18 @@ int main (void)
                     int g = (obj_num*34)%200+55;
                     int r = (obj_num*45)%200+55;
                     circle(img,predict_pt, 5, CV_RGB(b ,g, r),3);
-                    f_out << obj_num << " " << predict_pt.x << " " << predict_pt.y <<" " << obj_status[i][5]<< " " << obj_status[i][6]<< endl;//if not predict, output obj_num
+                    //f_out << obj_num <<" " << predict_pt.x << " " << predict_pt.y <<" " << obj_status[i][5]<< " " << obj_status[i][6]<< endl;//if not predict, output obj_num
+                	check_array[pointer][i][0] = -3;
+                    check_array[pointer][i][1] = obj_num;
+                    check_array[pointer][i][2] = predict_pt.x;
+                    check_array[pointer][i][3] = predict_pt.y;
+                    check_array[pointer][i][4] = obj_status[i][5];
+                    check_array[pointer][i][5] = obj_status[i][6];
                 }
 
                 
                 if (!img.empty()) {
-    				imshow("kalman", img);
+    				//imshow("kalman", img);
 				}
                 char key=(char)cvWaitKey(1);//s(S) to stop and start  
                 if (key==83 || key==115){    
@@ -198,11 +215,51 @@ int main (void)
                     }     
                 }
             }
-
         }
-
         
-
+        bool find_noise = true;
+        if (frame_number >= (txt_start+60)){
+        	f_out << "-2" << " " << frame_number-60 << endl;
+        	int pointer_temp = (pointer+1)%61;
+        	for (int i=0; i<20; i++){
+        		find_noise = true;
+        		if(check_array[pointer_temp][i][0] == -1){//check this block has predict point or not
+        			for (int j=1; j<=60; j++){
+        				for (int k=0; k<20; k++){
+        					if (check_array[(pointer_temp+j)%61][k][0]!= -1 && check_array[(pointer_temp+j)%61][k][1] ==check_array[pointer_temp][i][1]){
+        					//if there can find obj in the future 60 frames
+        						check_array[pointer_temp][i][0] = -3;
+        						break;
+        					}
+        				}
+        			}
+        		}
+        		else if (check_array[pointer_temp][i][0] == -3 && check_array[pointer_temp][i][1] == obj_counter){ 
+        		// check this object (which is not a predict point) is noise or not
+        			for (int k=0; k<20; k++){
+	        			if (check_array[(pointer_temp +5)%61][k][0] == -3 && check_array[(pointer_temp +5)%61][k][1] == check_array[pointer_temp][i][1]){
+	        			//if it can find , not a noise 
+	        				obj_counter++;
+	        				find_noise = false;
+	        				break;
+	        			}
+        			}
+        			if (find_noise == true){// if can't find in the future 5 frames, set the first attr to -1
+        				for (int j=0 ; j<6; j++){
+        					for (int k=0;k<20;k++ ){
+        						if (check_array[(pointer_temp+j)%61][k][1] == check_array[pointer_temp][i][1]){
+        							check_array[(pointer_temp+j)%61][k][0] = -1;
+        						}
+        					}
+        				}
+        			}
+        		}
+        		if (check_array[pointer_temp][i][0] == -3)
+        			f_out <<check_array[pointer_temp][i][1] <<" "<<check_array[pointer_temp][i][2]<<" "<<check_array[pointer_temp][i][3]<<" "<<check_array[pointer_temp][i][4]<<" "<<check_array[pointer_temp][i][5]<<endl;
+        		for (int j=0;j<6;j++)
+        			check_array[pointer_temp][i][j]=0;
+        	}
+        }
   	}
 
     //cvReleaseImage(&img);  
