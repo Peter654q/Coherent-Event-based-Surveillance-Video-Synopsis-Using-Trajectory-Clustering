@@ -86,7 +86,7 @@ int main (void)
             if(!compare){
                 double min_dist = 999.9;
                 int min_index = -1;
-                double dist_thresh = 60.0;
+                double dist_thresh = 180.0;
                 for (int j=0;j<20;j++){
                     if (obj_status[j][0] != -1){
                         double dist = pow(pow((obj_status[j][2] - tmp[2]), 2) + pow((obj_status[j][3]-tmp[3]), 2), 0.5);// L2 distance
@@ -131,7 +131,7 @@ int main (void)
                 }
             }
         }
-        //empty the obj_status array for 30 frames not upload's obj
+        //empty the obj_status array for 60 frames not upload's obj
         for(int i=0;i<20;i++){
             if((frame_number - obj_status[i][1] > 60) && obj_status[i][0]!=-1){ 
                 obj_status[i][0] = -1;
@@ -158,17 +158,21 @@ int main (void)
                 else
                 {
                     measurement[i]->data.fl[0]=obj_status[i][2];  
-                    measurement[i]->data.fl[1]=obj_status[i][3]; 
+                    measurement[i]->data.fl[1]=obj_status[i][3];
+                    predict_pt=cvPoint((int)obj_status[i][2],(int)obj_status[i][3]);
                 }
                 //3. update
                 cvKalmanCorrect( kalman[i], measurement[i] );
                 if(predict && obj_status[i][4]>20){
                     int obj_num = obj_status[i][0];
-                    int b = (obj_num*23)%200+55;
+                    /*int b = (obj_num*23)%200+55;
                     int g = (obj_num*34)%200+55;
-                    int r = (obj_num*45)%200+55;
+                    int r = (obj_num*45)%200+55;*/
+                    int b = 255;
+                    int g = 255;
+                    int r = 255;
                     circle(img,predict_pt, 5, CV_RGB(b ,g, r),3);
-                    f_out << obj_num << " " << predict_pt.x << " " << predict_pt.y <<" " << obj_status[i][5]<< " " << obj_status[i][6]<< endl;//if predict, output obj_num = -1
+                    f_out << "-1 "<<obj_num << " " << predict_pt.x << " " << predict_pt.y <<" " << obj_status[i][5]<< " " << obj_status[i][6]<< endl;//if predict, output obj_num = -1
                     //circle(img,predict_pt, 5, CV_RGB(255 ,255, 255),3);
                     //f_out << "-1" << " " << predict_pt.x << " " << predict_pt.y << endl;
                 }
@@ -183,12 +187,12 @@ int main (void)
 
                 
                 if (!img.empty()) {
-    				//imshow("kalman", img);
+    				imshow("kalman", img);
 				}
                 char key=(char)cvWaitKey(1);//s(S) to stop and start  
                 if (key==83 || key==115){    
                     while(true){
-                        char key=(char)cvWaitKey(30);
+                        key=(char)cvWaitKey(30);
                         if (key==83 || key==115)
                             break;
                     }     
