@@ -13,6 +13,7 @@ const int winWidth=1920;
 int main (void)  
 {  
     Mat img=imread("BG.jpg",CV_LOAD_IMAGE_UNCHANGED);// Background img
+    //Mat test=imread("BG.jpg",CV_LOAD_IMAGE_UNCHANGED);
     double obj_status[20][7] = {0};//Object array:obj_num, last_frame, (x,y) , live time ,width ,height
     for(int i=0;i<20;i++){
         obj_status[i][0] = -1;//-1 for no objs
@@ -40,7 +41,7 @@ int main (void)
 
     int check_array[61][20][6] = {0};//check for prediction points and noises
     int pointer = 0;
-    int obj_counter = 0;
+    //int obj_counter = 0;
     for(int frame_number = txt_start; frame_number < txt_end+1; frame_number++){
     	pointer = (frame_number - txt_start)%61;
         fstream f_in;
@@ -58,6 +59,7 @@ int main (void)
                 f_in.open(str.c_str(), ios::in);
                 if(f_in){
                 	img=imread("BG.jpg",CV_LOAD_IMAGE_UNCHANGED);
+                	//test=imread("BG.jpg",CV_LOAD_IMAGE_UNCHANGED);
                     break;
                 }
             }
@@ -178,7 +180,7 @@ int main (void)
                     int r = 255;
                     circle(img,predict_pt, 5, CV_RGB(b ,g, r),3);
                     //f_out <<obj_num << " " << predict_pt.x << " " << predict_pt.y <<" " << obj_status[i][5]<< " " << obj_status[i][6]<< endl;//if predict, output obj_num = -1
-                    //circle(img,predict_pt, 5, CV_RGB(255 ,255, 255),3);
+                    circle(img,predict_pt, 5, CV_RGB(255 ,255, 255),3);
                     check_array[pointer][i][0] = -1;
                     check_array[pointer][i][1] = obj_num;
                     check_array[pointer][i][2] = predict_pt.x;
@@ -204,7 +206,7 @@ int main (void)
 
                 
                 if (!img.empty()) {
-    				//imshow("kalman", img);
+    				imshow("kalman", img);
 				}
                 char key=(char)cvWaitKey(1);//s(S) to stop and start  
                 if (key==83 || key==115){    
@@ -234,12 +236,11 @@ int main (void)
         				}
         			}
         		}
-        		else if (check_array[pointer_temp][i][0] == -3 && check_array[pointer_temp][i][1] == obj_counter){ 
+        		else if (check_array[pointer_temp][i][0] == -3){ 
         		// check this object (which is not a predict point) is noise or not
         			for (int k=0; k<20; k++){
 	        			if (check_array[(pointer_temp +5)%61][k][0] == -3 && check_array[(pointer_temp +5)%61][k][1] == check_array[pointer_temp][i][1]){
 	        			//if it can find , not a noise 
-	        				obj_counter++;
 	        				find_noise = false;
 	        				break;
 	        			}
@@ -254,10 +255,16 @@ int main (void)
         				}
         			}
         		}
-        		if (check_array[pointer_temp][i][0] == -3)
+        		if (check_array[pointer_temp][i][0] == -3){
+        			/*int b = (check_array[pointer_temp][i][1]*23)%200+55;
+                    int g = (check_array[pointer_temp][i][1]*34)%200+55;
+                    int r = (check_array[pointer_temp][i][1]*45)%200+55;
+        			circle(test,cvPoint((int)check_array[pointer_temp][i][2],(int)check_array[pointer_temp][i][3]), 5, CV_RGB(b ,g, r),3);*/
         			f_out <<check_array[pointer_temp][i][1] <<" "<<check_array[pointer_temp][i][2]<<" "<<check_array[pointer_temp][i][3]<<" "<<check_array[pointer_temp][i][4]<<" "<<check_array[pointer_temp][i][5]<<endl;
+        			//imshow("test", test);
+        		}
         		for (int j=0;j<6;j++)
-        			check_array[pointer_temp][i][j]=0;
+        			check_array[pointer_temp][i][j]=-4;
         	}
         }
   	}
