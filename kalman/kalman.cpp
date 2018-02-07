@@ -10,10 +10,17 @@ using namespace cv;
 const int winHeight=1080;  
 const int winWidth=1920;  
   
-int main (void)  
+int main (int argc, char* argv[])  
 {  
-    Mat img=imread("BG.jpg",CV_LOAD_IMAGE_UNCHANGED);// Background img
-    Mat test=imread("BG.jpg",CV_LOAD_IMAGE_UNCHANGED);
+    const char * split = "."; 
+    char * folder;
+    folder = strtok(argv[argc-1],split);
+
+    stringstream ss1;
+    ss1 << "../" << folder << "/BG/1000.jpg";
+    string str1 = ss1.str();
+    Mat img=imread(str1, CV_LOAD_IMAGE_UNCHANGED);// Background img
+    Mat test=imread(str1, CV_LOAD_IMAGE_UNCHANGED);
     double obj_status[20][7] = {0};//Object array:obj_num, last_frame, (x,y) , live time ,width ,height
     for(int i=0;i<20;i++){
         obj_status[i][0] = -1;//-1 for no objs
@@ -34,10 +41,13 @@ int main (void)
     
 
     int txt_start=25;
-    int txt_end = 9334;
+    int txt_end = 56224+60;
     
     fstream f_out;
-    f_out.open("kalman_trajectory.txt", ios::out|ios::app);
+    stringstream ss2;
+    ss2 << "../" << folder << "/kalman_trajectory.txt";
+    string str2 = ss2.str();
+    f_out.open(str2.c_str(), ios::out|ios::app);
 
     int check_array[61][20][6];//check for prediction points and noises
     for (int i=0;i<61;i++){
@@ -52,10 +62,10 @@ int main (void)
     //int obj_counter = 0;
     for(int frame_number = txt_start; frame_number < txt_end+1; frame_number++){
         fstream f_in;
-        stringstream ss;
-        ss << "../distance_tracking/out/F_out" << frame_number << ".txt";
-        string str = ss.str();
-        f_in.open(str.c_str(), ios::in);
+        stringstream ss3;
+        ss3 << "../" << folder << "/txt_t/F_out" << frame_number << ".txt";
+        string str3 = ss3.str();
+        f_in.open(str3.c_str(), ios::in);
         if(f_in){
             int trash;
 	        double tmp[6];//obj_num, last_frame, (x,y) , width , height
@@ -201,7 +211,7 @@ int main (void)
 
                 
                 if (!img.empty()) {
-    				imshow("kalman", img);
+    				//imshow("kalman", img);
 				}
                 char key=(char)cvWaitKey(1);//s(S) to stop and start  
                 if (key==83 || key==115){    
@@ -209,6 +219,10 @@ int main (void)
                         key=(char)cvWaitKey(30);
                         if (key==83 || key==115)
                             break;
+                        if (key==67 || key==99){
+                            test=imread(str1, CV_LOAD_IMAGE_UNCHANGED);
+                            imshow("test", test);
+                        }
                     }     
                 }
             }
@@ -256,7 +270,7 @@ int main (void)
                     int r = (check_array[pointer_temp][i][1]*45)%200+55;
         			circle(test,cvPoint((int)check_array[pointer_temp][i][2],(int)check_array[pointer_temp][i][3]), 5, CV_RGB(b ,g, r),3);
         			f_out <<check_array[pointer_temp][i][1] <<" "<<check_array[pointer_temp][i][2]<<" "<<check_array[pointer_temp][i][3]<<" "<<check_array[pointer_temp][i][4]<<" "<<check_array[pointer_temp][i][5]<<endl;
-        			imshow("test", test);
+        			//imshow("test", test);
         		}
         		for (int j=0;j<6;j++)
         			check_array[pointer_temp][i][j]=-4;

@@ -7,7 +7,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-#include <string> 
+#include <string.h> 
 #include <sstream>
 #include <fstream>
 #include <math.h>
@@ -21,7 +21,7 @@ using namespace std;
 
 /** Function Headers */
 void processVideo(char* videoFilename,bool saveImages,bool showBB, bool saveTxt);
-void saveBGimages(bool buildBG, int frameNumber, Mat frame, Mat seg, Mat mor);
+void saveBGimages(char * folder, bool buildBG, int frameNumber, Mat frame, Mat seg, Mat mor);
 Mat doMorphological(Mat seg);
 
 /**
@@ -56,8 +56,8 @@ int main(int argc, char* argv[])
   }*/
 
   /* Create GUI windows. */
-  namedWindow("Frame");
-  namedWindow("Segmentation by ViBe");
+  //namedWindow("Frame");
+  //namedWindow("Segmentation by ViBe");
 	
 	bool saveImages = false;
 	bool showBB = false;
@@ -98,6 +98,9 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
 { 
   /* Create the capture object. */
   VideoCapture capture(videoFilename);
+  const char * split = "."; 
+  char * folder; 
+  folder = strtok (videoFilename,split);
 
   if (!capture.isOpened()) {
     /* Error in opening the video input. */
@@ -117,7 +120,10 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
   /* video writer. */
   VideoWriter writer;
   Size videoSize = Size((int)capture.get(CV_CAP_PROP_FRAME_WIDTH),(int)capture.get(CV_CAP_PROP_FRAME_HEIGHT));
-  writer.open("output.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, videoSize);
+  stringstream ss;
+  ss << folder << "/output1.avi";
+  string str = ss.str();
+  writer.open(str, CV_FOURCC('M', 'J', 'P', 'G'), 30, videoSize);
 
   /*build the background model until frame 3000. */
   bool buildBG = false;
@@ -214,7 +220,7 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
 					imageROI = copyframe(Rect(left, top, width, height));
 				}
 		        stringstream ss1;
-		        ss1 << "F" << frameNumber << "_o" << label << ".jpg";
+		        ss1 << folder << "/obj_n/F" << frameNumber << "_o" << label << ".jpg";
 		        string str1 = ss1.str();
 				if (saveImages == true)
 		        	imwrite(str1, imageROI);
@@ -223,7 +229,7 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
 			    
 		        fstream fp;
 		        stringstream ss2;
-		        ss2 << "txt05/F" << frameNumber << ".txt";
+		        ss2 << folder << "/txt_n/F" << frameNumber << ".txt";
 		        string str2 = ss2.str();
 		        
 		        fp.open(str2.c_str(), ios::out|ios::app);
@@ -236,7 +242,7 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
 		        fp << centroids.at<double>(label, 0) << endl; 
 			    fp << centroids.at<double>(label, 1) << endl << endl;
 			}
-     }//end if
+        }//end if
 	}//end for
 
     //video write
@@ -246,13 +252,13 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
     }
 
     /* Shows the current frame and the segmentation map. */
-    imshow("Frame", frame);
-    imshow("Segmentation by ViBe", segmentationMap);//output ViBe image
-    imshow("morphological_op", morphological);//after morphological operation
+    //imshow("Frame", frame);
+    //imshow("Segmentation by ViBe", segmentationMap);//output ViBe image
+    //imshow("morphological_op", morphological);//after morphological operation
     //imshow("Label Image", objImage);
 	
 	
-    saveBGimages(buildBG, frameNumber, frame, segmentationMap, morphological);//save background images
+    saveBGimages(folder, buildBG, frameNumber, frame, segmentationMap, morphological);//save background images
 	pre_frame = frame.clone();
     ++frameNumber;
 
@@ -276,15 +282,15 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
   libvibeModel_Sequential_Free(model);
 }
 
-void saveBGimages(bool buildBG, int frameNumber, Mat frame, Mat seg, Mat mor){
-	if (buildBG && (frameNumber % 1) == 0) { 
+void saveBGimages(char * folder, bool buildBG, int frameNumber, Mat frame, Mat seg, Mat mor){
+	if (buildBG && (frameNumber % 500) == 0) { 
 		//cout << "Frame number = " << frameNumber << endl;
 		
 		//output jpg files
 		stringstream ss1;
-        ss1 <<"BG_"<< frameNumber << ".jpg";
+        ss1 << folder << "/BG/"<< frameNumber << ".jpg";
         string str1 = ss1.str();
-		//imwrite(str1, frame);//save images
+		imwrite(str1, frame);//save images
         /*
 		stringstream ss2;
         ss2 << frameNumber << "SO.jpg";

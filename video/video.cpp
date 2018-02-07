@@ -5,6 +5,7 @@
 #include <sstream> 
 #include <iostream>
 #include <unistd.h>
+#include <string.h>
 using namespace std;  
 using namespace cv;
 
@@ -17,7 +18,7 @@ int main(int argc, char* argv[]){
 		  switch(c)
 		  {
 		  	case 'v':
-					cout<<"save video"<<endl;
+					cout << "save video" << endl;
 					saveVideo = true;
 		      break;
 		    default:
@@ -25,25 +26,33 @@ int main(int argc, char* argv[]){
 		  }	
 	}
 
-	
+    VideoCapture video(argv[argc-1]);
+    int frame_count=1;
+    if (!video.isOpened()){
+        return -1;
+    }
+
+	const char * split = "."; 
+    char * folder;
+    folder = strtok(argv[argc-1], split);
 
 	fstream fin;
-	fin.open("../kalman/kalman_trajectory.txt", ios::in);
+    stringstream ss1;
+    ss1 << "../" << folder << "/kalman_trajectory.txt";
+    string str1 = ss1.str();
+	fin.open(str1.c_str(), ios::in);
 	int tmp;
 	int txt_frame;
 	fin >> tmp;
 	fin >> txt_frame;
 
-	VideoCapture video(argv[argc-1]);
-	int frame_count=1;
-    if (!video.isOpened()){
-        return -1;
-    }
-
     Size videoSize = Size((int)video.get(CV_CAP_PROP_FRAME_WIDTH),(int)video.get(CV_CAP_PROP_FRAME_HEIGHT));
     VideoWriter writer;
 	if(saveVideo){
-		writer.open("output.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, videoSize);
+        stringstream ss2;
+        ss2 << "../" << folder << "/output2.avi";
+        string str2 = ss2.str();
+		writer.open(str2, CV_FOURCC('M', 'J', 'P', 'G'), 30, videoSize);
 	}
 
     int frame_obj[10000][20][5];
@@ -92,10 +101,10 @@ int main(int argc, char* argv[]){
                 	rect_h = 20;
                 }
   				Mat obj_frame = videoFrame(Rect(x, y, rect_w, rect_h));
-  				stringstream ss1;
-	        	ss1 << "obj/F" << frame_count << "_o" << obj << ".jpg";
-	        	string str1 = ss1.str();
-	        	imwrite(str1, obj_frame);
+  				stringstream ss3;
+	        	ss3 << "../" << folder << "/obj/F" << frame_count << "_o" << obj << ".jpg";
+	        	string str3 = ss3.str();
+	        	imwrite(str3, obj_frame);
 	        	frame_obj[frame_count][obj_cnt][0] = obj;
 	        	frame_obj[frame_count][obj_cnt][1] = x;
 	        	frame_obj[frame_count][obj_cnt][2] = y;
@@ -130,7 +139,14 @@ int main(int argc, char* argv[]){
     		appear_obj[i][j]=-1;
     }
     for(int frame=1;frame<frame_end;frame++){
-    	Mat BG = imread("BG.jpg",CV_LOAD_IMAGE_UNCHANGED);
+        int BG_number=500;
+        BG_number = (frame/500)*500;
+        if(BG_number==0)
+            BG_number=500;
+        stringstream ss4;
+        ss4 << "../" << folder << "/BG/" << BG_number << ".jpg";
+        string str4 = ss4.str();
+    	Mat BG = imread(str4.c_str(), CV_LOAD_IMAGE_UNCHANGED);
     	//new a obj every 30 frame
     	if(frame%30==1 && appear_obj_cnt<10){
     		int index=0;
@@ -198,13 +214,13 @@ int main(int argc, char* argv[]){
     					break;
     				}
     			}
-    			stringstream ss1;
-		        ss1 << "obj/F" << appear_obj[i][3] << "_o" << appear_obj[i][0] << ".jpg";
-		        string str1 = ss1.str();
-		        if (FILE * file = fopen(str1.c_str(), "r"))
+    			stringstream ss5;
+		        ss5 << "../" << folder << "/obj/F" << appear_obj[i][3] << "_o" << appear_obj[i][0] << ".jpg";
+		        string str5 = ss5.str();
+		        if (FILE * file = fopen(str5.c_str(), "r"))
     			{
         			fclose(file);
-        			Mat obj_img = imread(str1, CV_LOAD_IMAGE_UNCHANGED);
+        			Mat obj_img = imread(str5, CV_LOAD_IMAGE_UNCHANGED);
         			int second = appear_obj[i][3]/30;
         			int minute = second/60;
         			second = second%60;
@@ -222,7 +238,7 @@ int main(int argc, char* argv[]){
     	}
     	imshow("result", BG);
     	if(saveVideo){
-    		writer.set(VIDEOWRITER_PROP_QUALITY,1);
+    		//writer.set(VIDEOWRITER_PROP_QUALITY,1);
         	writer.write(BG);
     	}
     	char key=(char)cvWaitKey(1);//s(S) to stop and start  
