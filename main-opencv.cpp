@@ -252,9 +252,9 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
     }
 
     /* Shows the current frame and the segmentation map. */
-    //imshow("Frame", frame);
+    imshow("Frame", frame);
     //imshow("Segmentation by ViBe", segmentationMap);//output ViBe image
-    //imshow("morphological_op", morphological);//after morphological operation
+    imshow("morphological_op", morphological);//after morphological operation
     //imshow("Label Image", objImage);
 	
 	
@@ -313,9 +313,9 @@ Mat doMorphological(Mat seg){
 	dilate(mor,mor,Mat());
 
 	//fill up the yellow line
-	for(int x=0;x<6;x++)
+	for(int x=0;x<15;x++)
 		dilate(mor,mor,Mat());
-	for(int x=0;x<6;x++)
+	for(int x=0;x<15;x++)
 		erode(mor,mor,Mat());
 
     return mor;
