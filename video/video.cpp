@@ -12,8 +12,9 @@ using namespace cv;
 int main(int argc, char* argv[]){
 
 	bool saveVideo = false;
+    double transp = 0.6;//transparency
 	char c;
-	while((c=getopt(argc, argv, "v")) != -1)
+	while((c=getopt(argc, argv, "vt")) != -1)
 	{
 		  switch(c)
 		  {
@@ -21,6 +22,10 @@ int main(int argc, char* argv[]){
 					cout << "save video" << endl;
 					saveVideo = true;
 		      break;
+            case 't':
+                    cout << "input your transparency of object(max to 1.0, default:0.6)" << endl;
+                    cin >> transp;
+              break;
 		    default:
 		    	break;
 		  }	
@@ -78,7 +83,7 @@ int main(int argc, char* argv[]){
     }
     fin.close();
 
-//modify the obj's bounding box and clean some short trajectory//////////////////////////////////////
+//modify the obj's bounding box and clean some short trajectory//////////////////////////////////////////////////////////////////////////////////////////////////////
     const float pad_m=0.99;
     const float pad_p=1.05;
     int obj_maxframe=0;
@@ -136,14 +141,14 @@ int main(int argc, char* argv[]){
                 int nowh = max2h*2;
                 while(fobj >> tmp){
                     fobj >> x >> y >> width >> height;
-                    if(width*3<noww && height*3<nowh){
+                    if(width*2<noww && height*2<nowh){
                         noww = noww * pad_m;
                         nowh = nowh * pad_m;
-                    }else if(width*3>noww && height*3>nowh){
+                    }else if(width*2>noww && height*2>nowh){
                         //noww = noww * pad_p;
                         //nowh = nowh * pad_p;
-                        noww = width*3;
-                        nowh = height*3;
+                        noww = width*2;
+                        nowh = height*2;
                     }
                     fout << tmp << " " << x << " " << y << " " << noww << " " << nowh << endl;
                     //for make trajectory2.txt
@@ -166,13 +171,13 @@ int main(int argc, char* argv[]){
         }
     }
 
-//make kalman_trajectory2.txt for making jpg file///////////////////////////////////////////////////////////////////////////
+//make kalman_trajectory2.txt for making jpg file////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //fout
     fstream fout;
     ss.str("");
     ss << "../" << folder << "/kalman_trajectory2.txt";
     string str7 = ss.str();
-    fout.open(str7.c_str(), ios::out|ios::app);
+    fout.open(str7.c_str(), ios::out);
     for(int frame=1;frame<=obj_maxframe;frame++){
         //fin
         ss.str("");
@@ -193,7 +198,7 @@ int main(int argc, char* argv[]){
     }
     fout.close();
 
-//make jpg file//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//make jpg file////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     Mat videoFrame;
     bool txt_end = false;
     int frame_count=1;
@@ -255,7 +260,7 @@ int main(int argc, char* argv[]){
     }
     fin.close();
 
-//attach obj jpg to make video2/////////////////////////////////////////////////////////////////////////////////////////
+//attach obj jpg to make video2///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     int appear_obj[10][4];//10 object, [obj_number][start frame][end frame][now index]
     int frame_obj[10][3600][5];//10 object, 2 min frame buffer, [frame number][x][y][width][height]
     int appear_obj_cnt = 0;
@@ -372,22 +377,21 @@ int main(int argc, char* argv[]){
                 {
                     fclose(file);
                     Mat obj_img = imread(str13, CV_LOAD_IMAGE_UNCHANGED);
-                    for(int i=4;i<=1;i--){
-                        Mat obj_img_roi = obj_img(Rect(((1-i*0.2)/2)*obj_img.cols, ((1-i*0.2)/2)*obj_img.rows, obj_img.cols*(i*0.2), obj_img.rows*(i*0.2)));
+                    double transparency[4] = {0.1, 0.2, 0.3, transp};
+                    for(int j=4;j>=1;j--){
+                        Mat obj_img_roi = obj_img(Rect((1-j*0.2)/2*obj_img.cols, ((1-j*0.2)/2)*obj_img.rows, obj_img.cols*j*0.2, obj_img.rows*j*0.2));
                         //Mat BG_roi = BG(Rect(x, y, rect_w, rect_h));
-                        Mat BG_roi = BG(Rect(x+((1-i*0.2)/2)*obj_img.cols, y+((1-i*0.2)/2)*obj_img.rows, obj_img.cols*(i*0.2), obj_img.rows*(i*0.2)));
-                        addWeighted(obj_img_roi, i*0.2, BG_roi, 1-(i*0.2), 0, BG_roi);
+                        Mat BG_roi = BG(Rect(x + ((1-j*0.2)/2)*obj_img.cols, y + ((1-j*0.2)/2)*obj_img.rows, obj_img.cols*j*0.2, obj_img.rows*j*0.2));
+                        addWeighted(obj_img_roi, transparency[j], BG_roi, 1-transparency[j], 0, BG_roi);
                     }
                     
-                    /*int second = frame_obj[i][obj_nowframe][0]/30;
+                    int second = frame_obj[i][obj_nowframe][0]/30;
                     int minute = second/60;
                     second = second%60;
                     ss.str("");
                     ss << minute << ":" << second;
                     string str = ss.str();
-                    putText(obj_img, string(str), Point(0,20), 0, 1, Scalar(0,255,0), 3);*/
-                    //Mat imgROI = BG(Rect(x, y, rect_w, rect_h));
-                    //addWeighted(imgROI, 0.1, obj_img, 0.9, 0, imgROI);
+                    putText(BG, string(str), Point(x, y+20), 0, 1, Scalar(0,255,0), 3);
                 }
                 appear_obj[i][3] = appear_obj[i][3] + 1;//index++
             }
