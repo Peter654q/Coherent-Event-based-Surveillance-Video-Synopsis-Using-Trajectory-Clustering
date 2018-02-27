@@ -6,6 +6,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <string.h>
+#include <queue>
 using namespace std;  
 using namespace cv;
 
@@ -13,8 +14,9 @@ int main(int argc, char* argv[]){
 
 	bool saveVideo = false;
     double transp = 0.6;//transparency
+    double delay_time = 1.0;
 	char c;
-	while((c=getopt(argc, argv, "vt")) != -1)
+	while((c=getopt(argc, argv, "vts")) != -1)
 	{
 		  switch(c)
 		  {
@@ -23,9 +25,12 @@ int main(int argc, char* argv[]){
 					saveVideo = true;
 		      break;
             case 't':
-                    cout << "input your transparency of object(max to 1.0, default:0.6)" << endl;
+                    cout << "input your transparency(double) of object(max to 1.0, default:0.6)" << endl;
                     cin >> transp;
               break;
+            case 's':
+                    cout << "input your delay time(double) for each object(default:1 sec)" << endl;
+                    cin  >> delay_time; 
 		    default:
 		    	break;
 		  }	
@@ -125,7 +130,7 @@ int main(int argc, char* argv[]){
             //cout << obj_count << " " << maxx << " " << maxy << " " << minx << " " << miny << endl;
             deltax = maxx - minx;
             deltay = maxy - miny;
-            if(deltax<10 && deltay<10){
+            if(deltax<60 && deltay<60){
                 string rm = "rm " + str4;
                 system(rm.c_str());//delete noise and short trajectory
             }
@@ -267,6 +272,9 @@ int main(int argc, char* argv[]){
     int frame_end = 10000;
     int obj=0;//obj start from number 0
     bool end = false;
+    int previous_x = 0;
+    int previous_y = 0;
+    queue<int> queue;//for object number
     for(int i=0;i<10;i++){
         for(int j=0;j<4;j++)
             appear_obj[i][j]=-1;
@@ -281,65 +289,112 @@ int main(int argc, char* argv[]){
         string str11 = ss.str();
         Mat BG = imread(str11.c_str(), CV_LOAD_IMAGE_UNCHANGED);
         //new a obj every 30 frame
-        if(frame%30==1 && appear_obj_cnt<10 && obj<=obj_maxnum){
+        int delay = delay_time*30;
+        if(frame%delay==1 && appear_obj_cnt<10){
             int index=0;
+            int newobj_num=-1;
             while(true){
                 if(appear_obj[index][0]==(-1))
                     break;
                 else
                     index++;
             }
-
             bool found=false;
-            while(!found){
-                ss.str("");
-                ss << "../" << folder << "/obj_txt/obj_" << obj << ".txt";
-                string str12 = ss.str();
-                fin.open(str12.c_str(), ios::in);
-                if(fin){
-                    found = true;
-                    obj++;
-                }else{
-                    obj++;
-                }
-            }
             int tmp;
             int frame, x, y, rect_w, rect_h;//center=(x,y)
             int count=0;
-            while(fin >> tmp){
-                frame = tmp;
-                fin >> x >> y >> rect_w >> rect_h;
-                rect_w = rect_w + 40;
-                rect_h = rect_h + 40;//padding for not cutting obj
-                x = x - (rect_w/2);//change(x,y) from center to leftt top corner
-                y = y - (rect_h/2);
-                if(x+rect_w>videoSize.width)
-                    rect_w = videoSize.width - x;
-                if(y+rect_h>videoSize.height)
-                    rect_h = videoSize.height - y;
-                if(x<0)
-                    x=0;
-                if(y<0)
-                    y=0;
-                if(x>videoSize.width || y>videoSize.height || rect_w<=0 || rect_h<=0){
-                    x = videoSize.width-20;
-                    y = videoSize.height-20;
-                    rect_w = 20;
-                    rect_h = 20;
-                }
-                frame_obj[index][count][0] = frame;
-                frame_obj[index][count][1] = x;
-                frame_obj[index][count][2] = y;
-                frame_obj[index][count][3] = rect_w;
-                frame_obj[index][count][4] = rect_h;
-                count++;
+            bool newobj_from_queue = false;
+            string str14;
+            if(obj>=obj_maxnum){//for not staying in the queue for deadlock in the end
+                previous_x = -999;
+                previous_y = -999;
             }
-            appear_obj[index][0] = obj-1;
-            appear_obj[index][1] = frame_obj[index][0][0];
-            appear_obj[index][2] = frame_obj[index][count-1][0];
-            appear_obj[index][3] = 0;
-            appear_obj_cnt++;
-            fin.close();
+            if(!queue.empty()){
+                int queue_newobj = queue.front();
+                ss.str("");
+                ss << "../" << folder << "/obj_txt/obj_" << queue_newobj << ".txt";
+                str14 = ss.str();
+                fin.close();
+                fin.open(str14.c_str(), ios::in);
+                fin >> tmp >> x >> y;
+                if(sqrt((x-previous_x)*(x-previous_x)+(y-previous_y)*(y-previous_y)) > 200){//threshold=500, 
+                    cout << "new an obj from queue obj:" << queue.front() << endl;
+                    queue.pop();
+                    newobj_from_queue = true;
+                    x = previous_x;
+                    y = previous_y;
+                    newobj_num = queue_newobj;
+                }
+            }
+            if(!newobj_from_queue && obj<=obj_maxnum){
+                while(!found){
+                    ss.str("");
+                    ss << "../" << folder << "/obj_txt/obj_" << obj << ".txt";
+                    str14 = ss.str();
+                    fin.close();
+                    fin.open(str14.c_str(), ios::in);
+                    if(fin){
+                        fin >> tmp >> x >> y;
+                        if(sqrt((x-previous_x)*(x-previous_x)+(y-previous_y)*(y-previous_y)) < 200){//threshold=500, 
+                            queue.push(obj);
+                            cout << "push obj to queue:" << obj << endl;
+                            obj++;
+                        }else{
+                            found = true;
+                            cout << "find the obj:" << obj << endl;
+                            previous_x = x;
+                            previous_y = y;
+                            newobj_num = obj;
+                            obj++;
+                        }  
+                    }else{
+                        cout << "can't find the obj:" << obj << endl;
+                        obj++;
+                    }
+                    if(obj>=obj_maxnum)
+                        break;
+                }
+            }
+            if(newobj_num!=-1){
+                fin.close();
+                fin.open(str14.c_str(), ios::in);
+                cout << str14 << endl;
+                while(fin >> tmp){
+                    frame = tmp;
+                    fin >> x >> y >> rect_w >> rect_h;
+                    rect_w = rect_w + 40;
+                    rect_h = rect_h + 40;//padding for not cutting obj
+                    x = x - (rect_w/2);//change(x,y) from center to leftt top corner
+                    y = y - (rect_h/2);
+                    if(x+rect_w>videoSize.width)
+                        rect_w = videoSize.width - x;
+                    if(y+rect_h>videoSize.height)
+                        rect_h = videoSize.height - y;
+                    if(x<0)
+                        x=0;
+                    if(y<0)
+                        y=0;
+                    if(x>videoSize.width || y>videoSize.height || rect_w<=0 || rect_h<=0){
+                        x = videoSize.width-20;
+                        y = videoSize.height-20;
+                        rect_w = 20;
+                        rect_h = 20;
+                    }
+                    frame_obj[index][count][0] = frame;
+                    frame_obj[index][count][1] = x;
+                    frame_obj[index][count][2] = y;
+                    frame_obj[index][count][3] = rect_w;
+                    frame_obj[index][count][4] = rect_h;
+                    count++;
+                }
+                appear_obj[index][0] = newobj_num;
+                appear_obj[index][1] = frame_obj[index][0][0];
+                appear_obj[index][2] = frame_obj[index][count-1][0];
+                appear_obj[index][3] = 0;
+                appear_obj_cnt++;
+                fin.close(); 
+            }
+            
         }
         //delete obj when object won't appear again
         for(int i=0;i<10;i++){
@@ -389,13 +444,13 @@ int main(int argc, char* argv[]){
                     int minute = second/60;
                     second = second%60;
                     ss.str("");
-                    ss << minute << ":" << second;
+                    ss << appear_obj[i][0] << " " << setw(2) << setfill('0') << minute << ":" << setw(2) << setfill('0') << second;
                     string str = ss.str();
                     putText(BG, string(str), Point(x, y+20), 0, 1, Scalar(0,255,0), 3);
                 }
                 appear_obj[i][3] = appear_obj[i][3] + 1;//index++
             }
-            if(obj>=obj_maxnum && appear_obj_cnt==0)
+            if(obj>=obj_maxnum && appear_obj_cnt==0 && queue.empty())
                 end=true;
         }
         imshow("result", BG);
@@ -421,5 +476,6 @@ int main(int argc, char* argv[]){
             cout << endl;
         }
         cout << endl;
+        //cout << queue.size() << " " << obj << " " << obj_maxnum << endl;
     }
 }
