@@ -157,8 +157,10 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
 		buildBG = true;
 		frameNumber=1;
 	}
+
     /* ViBe: Segmentation and updating. */
-    libvibeModel_Sequential_Segmentation_8u_C3R(model, frame.data, segmentationMap.data);
+    Mat background_img = frame.clone();
+    libvibeModel_Sequential_Segmentation_8u_C3R(model, frame.data, segmentationMap.data, background_img.data);
     libvibeModel_Sequential_Update_8u_C3R(model, frame.data, segmentationMap.data);
 
     /* Post-processes the segmentation map. This step is not compulsory. 
@@ -252,13 +254,14 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
     }
 
     /* Shows the current frame and the segmentation map. */
-    imshow("Frame", frame);
+    //imshow("Frame", frame);
     //imshow("Segmentation by ViBe", segmentationMap);//output ViBe image
-    imshow("morphological_op", morphological);//after morphological operation
+    //imshow("Morphological operation", morphological);//after morphological operation
+    //imshow("Background", background_img);
     //imshow("Label Image", objImage);
 	
 	
-    saveBGimages(folder, buildBG, frameNumber, frame, segmentationMap, morphological);//save background images
+    saveBGimages(folder, buildBG, frameNumber, background_img, segmentationMap, morphological);//save background images
 	pre_frame = frame.clone();
     ++frameNumber;
 
