@@ -269,7 +269,8 @@ int32_t libvibeModel_Sequential_AllocInit_8u_C3R(
 int32_t libvibeModel_Sequential_Segmentation_8u_C3R(
   vibeModel_Sequential_t *model,
   const uint8_t *image_data,
-  uint8_t *segmentation_map
+  uint8_t *segmentation_map,
+  uint8_t *background_img
 );
 
 /**
