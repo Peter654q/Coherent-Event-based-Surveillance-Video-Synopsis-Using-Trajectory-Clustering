@@ -13,24 +13,29 @@ using namespace cv;
 int main(int argc, char* argv[]){
 
 	bool saveVideo = false;
-    double transp = 0.6;//transparency
+    double transp = 0.7;//transparency
     double delay_time = 1.0;
 	char c;
-	while((c=getopt(argc, argv, "vts")) != -1)
+	while((c=getopt(argc, argv, "vtsn")) != -1)
 	{
 		  switch(c)
 		  {
 		  	case 'v':
 					cout << "save video" << endl;
 					saveVideo = true;
-		      break;
+                break;
             case 't':
-                    cout << "input your transparency(double) of object(max to 1.0, default:0.6)" << endl;
+                    cout << "input your transparency(double) of object(max to 1.0, default:0.7)" << endl;
                     cin >> transp;
-              break;
+                break;
             case 's':
                     cout << "input your delay time(double) for each object(default:1 sec)" << endl;
                     cin  >> delay_time; 
+                break;
+            case 'n':
+                    cout << "Open night mode!" << endl;
+                    delay_time = 2;
+                break;
 		    default:
 		    	break;
 		  }	
@@ -90,7 +95,7 @@ int main(int argc, char* argv[]){
 
 //modify the obj's bounding box and clean some short trajectory//////////////////////////////////////////////////////////////////////////////////////////////////////
     const float pad_m=0.99;
-    const float pad_p=1.05;
+    const float pad_p=1.20;
     int obj_maxframe=0;
     for(int obj_count=0; obj_count<=obj_maxnum; obj_count++){
         fstream fobj;
@@ -130,7 +135,7 @@ int main(int argc, char* argv[]){
             //cout << obj_count << " " << maxx << " " << maxy << " " << minx << " " << miny << endl;
             deltax = maxx - minx;
             deltay = maxy - miny;
-            if(deltax<60 && deltay<60){
+            if(deltax<200 && deltay<200){
                 string rm = "rm " + str4;
                 system(rm.c_str());//delete noise and short trajectory
             }
@@ -150,10 +155,10 @@ int main(int argc, char* argv[]){
                         noww = noww * pad_m;
                         nowh = nowh * pad_m;
                     }else if(width*2>noww && height*2>nowh){
-                        //noww = noww * pad_p;
-                        //nowh = nowh * pad_p;
-                        noww = width*2;
-                        nowh = height*2;
+                        noww = noww * pad_p;
+                        nowh = nowh * pad_p;
+                        //noww = width*2;
+                        //nowh = height*2;
                     }
                     fout << tmp << " " << x << " " << y << " " << noww << " " << nowh << endl;
                     //for make trajectory2.txt
@@ -233,14 +238,14 @@ int main(int argc, char* argv[]){
                 rect_h = rect_h + 40;//padding for not cutting obj
                 x = x - (rect_w/2);//change(x,y) from center to leftt top corner
                 y = y - (rect_h/2);
-                if(x+rect_w>videoSize.width)
-                    rect_w = videoSize.width - x;
-                if(y+rect_h>videoSize.height)
-                    rect_h = videoSize.height - y;
                 if(x<0)
                     x=0;
                 if(y<0)
                     y=0;
+                if(x+rect_w>videoSize.width)
+                    rect_w = videoSize.width - x;
+                if(y+rect_h>videoSize.height)
+                    rect_h = videoSize.height - y;
                 if(x>videoSize.width || y>videoSize.height || rect_w<=0 || rect_h<=0){
                     x = videoSize.width-20;
                     y = videoSize.height-20;
@@ -251,7 +256,7 @@ int main(int argc, char* argv[]){
                 ss.str("");
                 ss << "../" << folder << "/obj_t/F" << frame_count << "_o" << obj << ".jpg";
                 string str10 = ss.str();
-                //cout << x << " " << y << " " << rect_w << " " << rect_h << endl;
+                
                 imwrite(str10, obj_frame);
             }
             if(fin >> tmp)
@@ -308,6 +313,7 @@ int main(int argc, char* argv[]){
             if(obj>=obj_maxnum){//for not staying in the queue for deadlock in the end
                 previous_x = -999;
                 previous_y = -999;
+                delay = 2;
             }
             if(!queue.empty()){
                 int queue_newobj = queue.front();
@@ -317,13 +323,15 @@ int main(int argc, char* argv[]){
                 fin.close();
                 fin.open(str14.c_str(), ios::in);
                 fin >> tmp >> x >> y;
-                if(sqrt((x-previous_x)*(x-previous_x)+(y-previous_y)*(y-previous_y)) > 200){//threshold=500, 
-                    cout << "new an obj from queue obj:" << queue.front() << endl;
+                cout << x << "," << y << " " << previous_x << "," << previous_y << endl;
+                if(sqrt((x-previous_x)*(x-previous_x)+(y-previous_y)*(y-previous_y)) > 500){//threshold=400, 
+                    cout << sqrt((x-previous_x)*(x-previous_x)+(y-previous_y)*(y-previous_y)) << endl;
                     queue.pop();
                     newobj_from_queue = true;
-                    x = previous_x;
-                    y = previous_y;
+                    previous_x = x;
+                    previous_y = y;
                     newobj_num = queue_newobj;
+                    cout << "new object from queue!" << newobj_num << endl;
                 }
             }
             if(!newobj_from_queue && obj<=obj_maxnum){
@@ -335,20 +343,17 @@ int main(int argc, char* argv[]){
                     fin.open(str14.c_str(), ios::in);
                     if(fin){
                         fin >> tmp >> x >> y;
-                        if(sqrt((x-previous_x)*(x-previous_x)+(y-previous_y)*(y-previous_y)) < 200){//threshold=500, 
+                        if(sqrt((x-previous_x)*(x-previous_x)+(y-previous_y)*(y-previous_y)) < 500){//threshold=400,bmay need bigger 
                             queue.push(obj);
-                            cout << "push obj to queue:" << obj << endl;
                             obj++;
                         }else{
                             found = true;
-                            cout << "find the obj:" << obj << endl;
                             previous_x = x;
                             previous_y = y;
                             newobj_num = obj;
                             obj++;
                         }  
                     }else{
-                        cout << "can't find the obj:" << obj << endl;
                         obj++;
                     }
                     if(obj>=obj_maxnum)
@@ -358,7 +363,6 @@ int main(int argc, char* argv[]){
             if(newobj_num!=-1){
                 fin.close();
                 fin.open(str14.c_str(), ios::in);
-                cout << str14 << endl;
                 while(fin >> tmp){
                     frame = tmp;
                     fin >> x >> y >> rect_w >> rect_h;
@@ -432,11 +436,13 @@ int main(int argc, char* argv[]){
                 {
                     fclose(file);
                     Mat obj_img = imread(str13, CV_LOAD_IMAGE_UNCHANGED);
-                    double transparency[4] = {0.1, 0.2, 0.3, transp};
-                    for(int j=4;j>=1;j--){
-                        Mat obj_img_roi = obj_img(Rect((1-j*0.2)/2*obj_img.cols, ((1-j*0.2)/2)*obj_img.rows, obj_img.cols*j*0.2, obj_img.rows*j*0.2));
+                    double transparency[3] = {0.3, 0.5, transp};
+                    double windowsize[3] = {1.0, 0.75, 0.5};
+                    for(int j=0;j<3;j++){
+                        Mat obj_img_roi = obj_img(Rect((1-windowsize[j])/2*obj_img.cols, (1-windowsize[j])/2*obj_img.rows, obj_img.cols*windowsize[j], obj_img.rows*windowsize[j]));
+                        //rectangle(obj_img_roi, Point(0, 0), Point(obj_img_roi.cols-1, obj_img_roi.rows-1), Scalar(255, 0, 0), 2, 8, 0);
                         //Mat BG_roi = BG(Rect(x, y, rect_w, rect_h));
-                        Mat BG_roi = BG(Rect(x + ((1-j*0.2)/2)*obj_img.cols, y + ((1-j*0.2)/2)*obj_img.rows, obj_img.cols*j*0.2, obj_img.rows*j*0.2));
+                        Mat BG_roi = BG(Rect(x + (1-windowsize[j])/2*obj_img.cols, y + (1-windowsize[j])/2*obj_img.rows, obj_img.cols*windowsize[j], obj_img.rows*windowsize[j]));
                         addWeighted(obj_img_roi, transparency[j], BG_roi, 1-transparency[j], 0, BG_roi);
                     }
                     
@@ -444,9 +450,9 @@ int main(int argc, char* argv[]){
                     int minute = second/60;
                     second = second%60;
                     ss.str("");
-                    ss << appear_obj[i][0] << " " << setw(2) << setfill('0') << minute << ":" << setw(2) << setfill('0') << second;
+                    ss << setw(2) << setfill('0') << minute << ":" << setw(2) << setfill('0') << second;
                     string str = ss.str();
-                    putText(BG, string(str), Point(x, y+20), 0, 1, Scalar(0,255,0), 3);
+                    putText(BG, string(str), Point(x+(obj_img.cols/2)-35, y + (1-windowsize[2])/2*obj_img.rows+20), 0, 1, Scalar(0,255,0), 3);
                 }
                 appear_obj[i][3] = appear_obj[i][3] + 1;//index++
             }
@@ -469,13 +475,13 @@ int main(int argc, char* argv[]){
         if(end)
             break;
 
-        for(int i=0;i<10;i++){
+        /*for(int i=0;i<10;i++){
             for(int j=0;j<4;j++){
-                cout << appear_obj[i][j] << " ";
+                cout -v << appear_obj[i][j] << " ";
             }
             cout << endl;
         }
-        cout << endl;
+        cout << endl;*/
         //cout << queue.size() << " " << obj << " " << obj_maxnum << endl;
     }
 }

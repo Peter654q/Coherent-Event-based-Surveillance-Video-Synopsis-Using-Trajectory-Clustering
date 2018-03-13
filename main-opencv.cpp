@@ -20,9 +20,10 @@ using namespace cv;
 using namespace std;
 
 /** Function Headers */
-void processVideo(char* videoFilename,bool saveImages,bool showBB, bool saveTxt);
+void processVideo(char* videoFilename,bool saveImages,bool showBB, bool saveTxt, bool night);
 void saveBGimages(char * folder, bool buildBG, int frameNumber, Mat frame, Mat seg, Mat mor);
 Mat doMorphological(Mat seg);
+double average_pixel(Mat I);
 
 /**
  * Displays instructions on how to use this program.
@@ -62,27 +63,34 @@ int main(int argc, char* argv[])
 	bool saveImages = false;
 	bool showBB = false;
 	bool saveTxt = false;
+    bool night = false;
 	char c;
-	while((c=getopt(argc, argv, "srt")) != -1)
+	while((c=getopt(argc, argv, "srtn")) != -1)
 	{
-		  switch(c)
-		  {
-		  case 's':
-					cout<<"save object images"<<endl;
-					saveImages = true;
-		      break;
-		  case 'r':
-					cout<<"show bounding boxes"<<endl;
-					showBB = true;
-		      break;
-		  case 't':
-					cout<<"save txt files"<<endl;
-					saveTxt = true;
-		      break;
+		switch(c)
+		{
+            case 's':
+				cout<<"save object images"<<endl;
+				saveImages = true;
+                break;
+            case 'r':
+				cout<<"show bounding boxes"<<endl;
+				showBB = true;
+                break;
+            case 't':
+				cout<<"save txt files"<<endl;
+				saveTxt = true;
+                break;
+            case 'n':
+                    cout<<"Open night mode!"<<endl;
+                    night = true;
+                break;
+            default:
+                break;
 		  }	
 	}
 
-  processVideo(argv[argc-1],saveImages,showBB , saveTxt);
+  processVideo(argv[argc-1],saveImages,showBB , saveTxt, night);
 
   /* Destroy GUI windows. */
   destroyAllWindows();
@@ -94,7 +102,7 @@ int main(int argc, char* argv[])
  *
  * @param videoFilename  The name of the input video file. 
  */
-void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt)
+void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt, bool night)
 { 
   /* Create the capture object. */
   VideoCapture capture(videoFilename);
@@ -156,6 +164,7 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
     	capture.set(CV_CAP_PROP_POS_FRAMES,1); 
 		buildBG = true;
 		frameNumber=1;
+        cout << "Background model training finished!" << endl;
 	}
 
     /* ViBe: Segmentation and updating. */
@@ -209,40 +218,74 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
         //area threshold = 450
 		if (stats.at<int>(label,CC_STAT_AREA)>350){
             bool_obj=true;
-            //draw rectangle
-			if (showBB == true)
-	    		rectangle(frame, Point(left-3, top-18), Point(left+width+3, top+height+3), Scalar(0,0,255), 3, 8, 0); // add bias for the disappear helmets
+            
 			if(buildBG && saveTxt){
 		  		//output object jpg file
-				Mat imageROI;		
+				Mat imageROI, imageROI_hsv, light_result;		
 				if(top>=15){
 		        	imageROI = copyframe(Rect(left, top-15, width, height));
 				}
 				else{
 					imageROI = copyframe(Rect(left, top, width, height));
 				}
-		        stringstream ss1;
-		        ss1 << folder << "/obj_n/F" << frameNumber << "_o" << label << ".jpg";
-		        string str1 = ss1.str();
-				if (saveImages == true)
-		        	imwrite(str1, imageROI);
-					
-		        //ouput object information txt file
-			    
-		        fstream fp;
-		        stringstream ss2;
-		        ss2 << folder << "/txt_n/F" << frameNumber << ".txt";
-		        string str2 = ss2.str();
-		        
-		        fp.open(str2.c_str(), ios::out|ios::app);
-		        fp << label << endl;
-		        fp << left << endl;
-		        fp << top << endl;
-		        fp << width << endl;
-		        fp << height << endl;
-		        fp << stats.at<int>(label,cv::CC_STAT_AREA) << endl;
-		        fp << centroids.at<double>(label, 0) << endl; 
-			    fp << centroids.at<double>(label, 1) << endl << endl;
+                bool pass = true;
+                if(night){
+                    pass = false;
+                    Mat r1, r2, w, light_img;
+                    Mat stats_light, centroids_light;
+                    int nLabels_light=0;
+                    cvtColor( imageROI, imageROI_hsv, CV_BGR2HSV);
+                    inRange(imageROI_hsv, Scalar(0, 100, 200), Scalar(15, 255, 255), r1);
+                    inRange(imageROI_hsv, Scalar(150, 100, 200), Scalar(180, 255, 255), r2);
+                    inRange(imageROI_hsv, Scalar(0, 0, 250), Scalar(180, 51, 255), w);
+                    /*inRange(imageROI_hsv, Scalar(0, 43, 46), Scalar(10, 255, 255), r1);//thres2
+                    inRange(imageROI_hsv, Scalar(312, 43, 46), Scalar(360, 255, 255), r2);
+                    inRange(imageROI_hsv, Scalar(0, 0, 221), Scalar(360, 30, 255), w);*/
+                    add(r1, r2, light_result, noArray(), -1);
+                    add(light_result, w, light_result, noArray(), -1);
+                    //imshow("light result", light_result);
+                    nLabels_light = connectedComponentsWithStats(light_result, light_img, stats_light, centroids_light, 8, CV_32S);
+                    int light_area=0;
+                    for(int label = 1; label < nLabels_light; ++label){
+                        if(stats_light.at<int>(label,cv::CC_STAT_AREA)>light_area){
+                            light_area = stats_light.at<int>(label,cv::CC_STAT_AREA);
+                        }      
+                    }
+                    if(nLabels_light>0 && light_area>15 && imageROI.cols/imageROI.rows<3 && imageROI.rows/imageROI.cols<3){
+                        pass = true;
+                    }else if(imageROI.cols*imageROI.rows>500){
+                        //pass = true;
+                    }
+                }
+                
+                if(pass){
+    		        stringstream ss1;
+    		        ss1 << folder << "/obj_n/F" << frameNumber << "_o" << label << ".jpg";
+    		        string str1 = ss1.str();
+    				if (saveImages == true)
+    		        	imwrite(str1, imageROI);
+    					
+    		        //ouput object information txt file
+    			    
+    		        fstream fp;
+    		        stringstream ss2;
+    		        ss2 << folder << "/txt_n/F" << frameNumber << ".txt";
+    		        string str2 = ss2.str();
+    		        
+    		        fp.open(str2.c_str(), ios::out|ios::app);
+    		        fp << label << endl;
+    		        fp << left << endl;
+    		        fp << top << endl;
+    		        fp << width << endl;
+    		        fp << height << endl;
+    		        fp << stats.at<int>(label,cv::CC_STAT_AREA) << endl;
+    		        fp << centroids.at<double>(label, 0) << endl; 
+    			    fp << centroids.at<double>(label, 1) << endl << endl;
+
+                    //draw rectangle
+                    if (showBB == true)
+                        rectangle(frame, Point(left-3, top-18), Point(left+width+3, top+height+3), Scalar(0,0,255), 3, 8, 0); // add bias for the disappear helmets
+                }
 			}
         }//end if
 	}//end for
@@ -294,17 +337,6 @@ void saveBGimages(char * folder, bool buildBG, int frameNumber, Mat frame, Mat s
         ss1 << folder << "/BG/"<< frameNumber << ".jpg";
         string str1 = ss1.str();
 		imwrite(str1, frame);//save images
-        /*
-		stringstream ss2;
-        ss2 << frameNumber << "SO.jpg";
-        string str2 = ss2.str();
-		imwrite(str2, seg);
-
-		stringstream ss3;
-        ss3 << frameNumber << "M.jpg";
-        string str3 = ss3.str();
-		imwrite(str3, mor);
-        */
 	}
 }
 
@@ -322,6 +354,19 @@ Mat doMorphological(Mat seg){
 		erode(mor,mor,Mat());
 
     return mor;
+}
+
+double average_pixel(Mat I){
+    int width  = I.cols;
+    int height = I.rows;
+    int sum=0;
+    for (int i=0; i<height;i++){
+        for(int j=0; j<width; j++){
+            if(I.at<uchar>(i, j)>80)
+                sum++;
+        }
+    }
+    return (double)sum/(width*height);
 }
 
 
