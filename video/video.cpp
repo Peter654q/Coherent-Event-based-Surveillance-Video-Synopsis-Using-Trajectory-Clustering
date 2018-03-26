@@ -18,8 +18,10 @@ int main(int argc, char* argv[]){
 	bool saveVideo = false;
     double transp = 0.7;//transparency
     double delay_time = 1.0;
+    float pad_m=0.99;
+    float pad_p=1.20;
 	char c;
-	while((c=getopt(argc, argv, "vtsn")) != -1)
+	while((c=getopt(argc, argv, "vtsnp")) != -1)
 	{
 		  switch(c)
 		  {
@@ -38,6 +40,13 @@ int main(int argc, char* argv[]){
             case 'n':
                     cout << "Open night mode!" << endl;
                     delay_time = 2;
+                break;
+            case 'p':
+                    cout << "input the value you want to shrink and enlarge when object size changed!" << endl;
+                    cout << "first input the scale factor of shrinking(default:0.99): ";
+                    cin >> pad_m;
+                    cout << "input the scale factor of enlarging(default:1.20): ";
+                    cin >> pad_p;
                 break;
 		    default:
 		    	break;
@@ -104,8 +113,6 @@ int main(int argc, char* argv[]){
     fin.close();
 
 //modify the obj's bounding box and clean some short trajectory//////////////////////////////////////////////////////////////////////////////////////////////////////
-    const float pad_m=0.99;
-    const float pad_p=1.20;
     int obj_maxframe=0;
     for(int obj_count=0; obj_count<=obj_maxnum; obj_count++){
         fstream fobj;

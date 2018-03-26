@@ -46,11 +46,9 @@ bounding box height
 
 5.video.cpp
 (其輸入為kalman_trajectory.txt)
-範例輸入：./video ../00004.avi -v -t -s -n -p
+範例輸入：./video ../00004.avi -v -t -s
 	-v:save video
 	-t:modify transparency
 	-s:modify object delay time
-	-n:open night mode
-	-p:modify the scale factor of shrinking and enlarging
 檔名：output2.avi(folder內)
 
