@@ -7,11 +7,14 @@
 #include <unistd.h>
 #include <string.h>
 #include <queue>
+#include "object_tracking.h"
+#include "kalman.h"
 using namespace std;  
 using namespace cv;
 
 int main(int argc, char* argv[]){
 
+    
 	bool saveVideo = false;
     double transp = 0.7;//transparency
     double delay_time = 1.0;
@@ -41,12 +44,19 @@ int main(int argc, char* argv[]){
 		  }	
 	}
 
+    
+
     VideoCapture video(argv[argc-1]);
     if (!video.isOpened()){
         return -1;
     }
-
-	const char * split = "."; 
+    
+    object_tracking(argc, argv);
+    cout << "object_tracking done!" << endl;
+    kalman(argc, argv);
+    cout << "kalman tracking done!" << endl;
+	
+    const char * split = "."; 
     char * folder;
     folder = strtok(argv[argc-1], split);
 
@@ -459,7 +469,7 @@ int main(int argc, char* argv[]){
             if(obj>=obj_maxnum && appear_obj_cnt==0 && queue.empty())
                 end=true;
         }
-        imshow("result", BG);
+        //imshow("result", BG);
         if(saveVideo){
             //writer.set(VIDEOWRITER_PROP_QUALITY,1);
             writer.write(BG);
@@ -474,14 +484,5 @@ int main(int argc, char* argv[]){
         }
         if(end)
             break;
-
-        /*for(int i=0;i<10;i++){
-            for(int j=0;j<4;j++){
-                cout -v << appear_obj[i][j] << " ";
-            }
-            cout << endl;
-        }
-        cout << endl;*/
-        //cout << queue.size() << " " << obj << " " << obj_maxnum << endl;
     }
 }
