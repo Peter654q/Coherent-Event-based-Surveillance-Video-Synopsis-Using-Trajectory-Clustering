@@ -16,7 +16,7 @@ int object_tracking(int argc, char* argv[]){
 	double array1[20][8];
 	double array2[20][8];
 	double out[20][8];
-	int frame = 66598;//00023.avi/00000.avi last frame number:66929/00004.avi:66598
+	int frame = 70000;//00023.avi/00000.avi last frame number:66929/00004.avi:66598
 	int counts_obj=0;
     
     counts_obj = init(25, counts_obj);
@@ -46,6 +46,8 @@ int object_tracking(int argc, char* argv[]){
 					string str2 = ss2.str();
 					fp2.open(str2.c_str(), ios::in);
 					if(fp2){
+						break;
+					}else if(frameNumber>frame){
 						break;
 					}
 				}
