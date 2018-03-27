@@ -20,8 +20,9 @@ int main(int argc, char* argv[]){
     double delay_time = 1.0;
     float pad_m=0.99;
     float pad_p=1.20;
+    double dist_thresh = 500;
 	char c;
-	while((c=getopt(argc, argv, "vtsnp")) != -1)
+	while((c=getopt(argc, argv, "vtsnpd")) != -1)
 	{
 		  switch(c)
 		  {
@@ -41,13 +42,16 @@ int main(int argc, char* argv[]){
                     cout << "Open night mode!" << endl;
                     delay_time = 2;
                 break;
-            case 'p':
+            case 'p':s
                     cout << "input the value you want to shrink and enlarge when object size changed!" << endl;
                     cout << "first input the scale factor of shrinking(default:0.99): ";
                     cin >> pad_m;
                     cout << "input the scale factor of enlarging(default:1.20): ";
                     cin >> pad_p;
                 break;
+            case 'd':
+                    cout<<"input the distance threshold to do the object scheduling default(500)"<<endl;
+                    cin >> dist_thresh;
 		    default:
 		    	break;
 		  }	
@@ -341,7 +345,7 @@ int main(int argc, char* argv[]){
                 fin.open(str14.c_str(), ios::in);
                 fin >> tmp >> x >> y;
                 cout << x << "," << y << " " << previous_x << "," << previous_y << endl;
-                if(sqrt((x-previous_x)*(x-previous_x)+(y-previous_y)*(y-previous_y)) > 500){//threshold=400, 
+                if(sqrt((x-previous_x)*(x-previous_x)+(y-previous_y)*(y-previous_y)) > dist_thresh){//threshold=400, 
                     cout << sqrt((x-previous_x)*(x-previous_x)+(y-previous_y)*(y-previous_y)) << endl;
                     queue.pop();
                     newobj_from_queue = true;
@@ -360,7 +364,7 @@ int main(int argc, char* argv[]){
                     fin.open(str14.c_str(), ios::in);
                     if(fin){
                         fin >> tmp >> x >> y;
-                        if(sqrt((x-previous_x)*(x-previous_x)+(y-previous_y)*(y-previous_y)) < 500){//threshold=400,bmay need bigger 
+                        if(sqrt((x-previous_x)*(x-previous_x)+(y-previous_y)*(y-previous_y)) < dist_thresh){//threshold=400,bmay need bigger 
                             queue.push(obj);
                             obj++;
                         }else{
