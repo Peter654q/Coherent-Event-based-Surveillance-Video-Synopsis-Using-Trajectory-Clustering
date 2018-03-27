@@ -64,26 +64,31 @@ int main(int argc, char* argv[])
 	bool showBB = false;
 	bool saveTxt = false;
     bool night = false;
+    int frameToRestart = 3000; 
 	char c;
-	while((c=getopt(argc, argv, "srtn")) != -1)
+	while((c=getopt(argc, argv, "srtnf")) != -1)
 	{
 		switch(c)
 		{
             case 's':
-				cout<<"save object images"<<endl;
+				cout << "save object images" << endl;
 				saveImages = true;
                 break;
             case 'r':
-				cout<<"show bounding boxes"<<endl;
+				cout << "show bounding boxes" << endl;
 				showBB = true;
                 break;
             case 't':
-				cout<<"save txt files"<<endl;
+				cout << "save txt files" << endl;
 				saveTxt = true;
                 break;
             case 'n':
-                    cout<<"Open night mode!"<<endl;
-                    night = true;
+                cout << "Open night mode!" << endl;
+                night = true;
+                break;
+            case 'f':
+                cout << "Input your frame number(int) of background model training(default:3000)"<<endl;
+                cin >> frameToRestart;
                 break;
             default:
                 break;
@@ -135,7 +140,7 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
 
   /*build the background model until frame 3000. */
   bool buildBG = false;
-  int frameToRestart = 3000; 
+  
   /* use for mean-shift tracking */
   Mat pre_frame;
   /* Read input data. ESC or 'q' for quitting. */

@@ -23,10 +23,22 @@ bounding box height
 連接部份面積
 中心點x
 中心點y
+(若需要執行video.cpp請務必加上-t)
 
-3. object_tracking.cpp
+3.video.cpp
+(其輸入為kalman_trajectory.txt)
+範例輸入：./video ../00004.avi -v -t -s -n -p -d
+	-v:save video
+	-t:modify transparency
+	-s:modify object delay time
+	-n:open night mode
+	-p:modify the scale factor of shrinking and enlarging
+	-d:modify the distance threshold to do the object scheduling
+檔名：output2.avi(folder內)
+
+3-1. object_tracking.h
 (其輸入為main-opencv.cpp的輸出，和object_tracking.cpp的輸出)
-範例輸入：./object_tracking ../00004.avi
+範例輸入：由video.cpp呼叫
 檔名：F_outXXX.txt (放在folder/txt_t內)
 初步比較的物體編號
 bounding box left
@@ -37,18 +49,12 @@ bounding box height
 中心點x
 中心點y
 
-4.kalman.cpp
+3-2.kalman.h
 (其輸入為object_tracking.cpp的輸出)
-範例輸入：./kalman ../00004.avi
+範例輸入：由video.cpp呼叫
 檔名：kalman_trajectory.txt(所有物體軌跡都在裏面，folder內)
 -2 (代表後面接framenumber) frame_number
 物體編號 預測x 預測y 物體寬 物體高
 
-5.video.cpp
-(其輸入為kalman_trajectory.txt)
-範例輸入：./video ../00004.avi -v -t -s
-	-v:save video
-	-t:modify transparency
-	-s:modify object delay time
-檔名：output2.avi(folder內)
+
 
