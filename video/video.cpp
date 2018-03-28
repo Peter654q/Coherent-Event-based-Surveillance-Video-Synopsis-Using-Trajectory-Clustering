@@ -42,7 +42,7 @@ int main(int argc, char* argv[]){
                     cout << "Open night mode!" << endl;
                     delay_time = 2;
                 break;
-            case 'p':s
+            case 'p':
                     cout << "input the value you want to shrink and enlarge when object size changed!" << endl;
                     cout << "first input the scale factor of shrinking(default:0.99): ";
                     cin >> pad_m;
@@ -153,7 +153,6 @@ int main(int argc, char* argv[]){
                     maxh = height;
                 }
             }
-            //cout << obj_count << " " << maxx << " " << maxy << " " << minx << " " << miny << endl;
             deltax = maxx - minx;
             deltay = maxy - miny;
             if(deltax<200 && deltay<200){
@@ -178,8 +177,6 @@ int main(int argc, char* argv[]){
                     }else if(width*2>noww && height*2>nowh){
                         noww = noww * pad_p;
                         nowh = nowh * pad_p;
-                        //noww = width*2;
-                        //nowh = height*2;
                     }
                     fout << tmp << " " << x << " " << y << " " << noww << " " << nowh << endl;
                     //for make trajectory2.txt
@@ -419,7 +416,6 @@ int main(int argc, char* argv[]){
                 appear_obj_cnt++;
                 fin.close(); 
             }
-            
         }
         //delete obj when object won't appear again
         for(int i=0;i<10;i++){
@@ -461,8 +457,6 @@ int main(int argc, char* argv[]){
                     double windowsize[3] = {1.0, 0.75, 0.5};
                     for(int j=0;j<3;j++){
                         Mat obj_img_roi = obj_img(Rect((1-windowsize[j])/2*obj_img.cols, (1-windowsize[j])/2*obj_img.rows, obj_img.cols*windowsize[j], obj_img.rows*windowsize[j]));
-                        //rectangle(obj_img_roi, Point(0, 0), Point(obj_img_roi.cols-1, obj_img_roi.rows-1), Scalar(255, 0, 0), 2, 8, 0);
-                        //Mat BG_roi = BG(Rect(x, y, rect_w, rect_h));
                         Mat BG_roi = BG(Rect(x + (1-windowsize[j])/2*obj_img.cols, y + (1-windowsize[j])/2*obj_img.rows, obj_img.cols*windowsize[j], obj_img.rows*windowsize[j]));
                         addWeighted(obj_img_roi, transparency[j], BG_roi, 1-transparency[j], 0, BG_roi);
                     }

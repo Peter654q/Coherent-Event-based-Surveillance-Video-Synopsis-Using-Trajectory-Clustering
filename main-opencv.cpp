@@ -20,7 +20,7 @@ using namespace cv;
 using namespace std;
 
 /** Function Headers */
-void processVideo(char* videoFilename,bool saveImages,bool showBB, bool saveTxt, bool night);
+void processVideo(char* videoFilename,bool saveImages,bool showBB, bool saveTxt, bool night, int frameToRestart);
 void saveBGimages(char * folder, bool buildBG, int frameNumber, Mat frame, Mat seg, Mat mor);
 Mat doMorphological(Mat seg);
 double average_pixel(Mat I);
@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
 		  }	
 	}
 
-  processVideo(argv[argc-1],saveImages,showBB , saveTxt, night);
+  processVideo(argv[argc-1],saveImages,showBB , saveTxt, night, frameToRestart);
 
   /* Destroy GUI windows. */
   destroyAllWindows();
@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
  *
  * @param videoFilename  The name of the input video file. 
  */
-void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt, bool night)
+void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt, bool night, int frameToRestart)
 { 
   /* Create the capture object. */
   VideoCapture capture(videoFilename);
@@ -193,23 +193,6 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
 	int nLabels=0;
 	nLabels = connectedComponentsWithStats(morphological, labelImage, stats, centroids, 8, CV_32S);
 
-	/*output object result
-	vector<cv::Vec3b> colors(nLabels+1);
-	colors[0] = Vec3b(0,0,0);
-	for(int i = 1; i < nLabels; i++ ){
-		colors[i] = Vec3b(rand()%256, rand()%256, rand()%256);
-		if( stats.at<int>(i, cv::CC_STAT_AREA) < 200 )
-			colors[i] = Vec3b(0,0,0); 
-	}
-	Mat objImage = Mat::zeros(morphological.size(), CV_8UC3);
-	for( int y = 0; y < objImage.rows; y++ ){
-		for( int x = 0; x < objImage.cols; x++ ){
-			int label = labelImage.at<int>(y, x);
-			CV_Assert(0 <= label && label <= nLabels);
-			objImage.at<cv::Vec3b>(y, x) = colors[label];
-		}
-	}*/
-
     bool bool_obj=false;    
 
     Mat copyframe;//for imageROI
@@ -243,12 +226,8 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
                     inRange(imageROI_hsv, Scalar(0, 100, 200), Scalar(15, 255, 255), r1);
                     inRange(imageROI_hsv, Scalar(150, 100, 200), Scalar(180, 255, 255), r2);
                     inRange(imageROI_hsv, Scalar(0, 0, 250), Scalar(180, 51, 255), w);
-                    /*inRange(imageROI_hsv, Scalar(0, 43, 46), Scalar(10, 255, 255), r1);//thres2
-                    inRange(imageROI_hsv, Scalar(312, 43, 46), Scalar(360, 255, 255), r2);
-                    inRange(imageROI_hsv, Scalar(0, 0, 221), Scalar(360, 30, 255), w);*/
                     add(r1, r2, light_result, noArray(), -1);
                     add(light_result, w, light_result, noArray(), -1);
-                    //imshow("light result", light_result);
                     nLabels_light = connectedComponentsWithStats(light_result, light_img, stats_light, centroids_light, 8, CV_32S);
                     int light_area=0;
                     for(int label = 1; label < nLabels_light; ++label){
@@ -258,8 +237,6 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
                     }
                     if(nLabels_light>0 && light_area>15 && imageROI.cols/imageROI.rows<3 && imageROI.rows/imageROI.cols<3){
                         pass = true;
-                    }else if(imageROI.cols*imageROI.rows>500){
-                        //pass = true;
                     }
                 }
                 
@@ -271,7 +248,6 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
     		        	imwrite(str1, imageROI);
     					
     		        //ouput object information txt file
-    			    
     		        fstream fp;
     		        stringstream ss2;
     		        ss2 << folder << "/txt_n/F" << frameNumber << ".txt";
@@ -334,9 +310,7 @@ void processVideo(char* videoFilename,bool saveImages,bool showBB , bool saveTxt
 }
 
 void saveBGimages(char * folder, bool buildBG, int frameNumber, Mat frame, Mat seg, Mat mor){
-	if (buildBG && (frameNumber % 500) == 0) { 
-		//cout << "Frame number = " << frameNumber << endl;
-		
+	if (buildBG && (frameNumber % 500) == 0) { 	
 		//output jpg files
 		stringstream ss1;
         ss1 << folder << "/BG/"<< frameNumber << ".jpg";
@@ -373,6 +347,3 @@ double average_pixel(Mat I){
     }
     return (double)sum/(width*height);
 }
-
-
-

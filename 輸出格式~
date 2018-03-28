@@ -10,10 +10,11 @@ txt_t：放置初步tracling過後之txt file(object_tracking.cpp所使用)
 )
 
 2. main-opencv.cpp
-範例輸入：./main-opencv ../00004.avi -s -r -t
+範例輸入：./main-opencv ../00004.avi -s -r -t -f
 	-s:save object images
 	-r:show bounding boxes
 	-t:save txt files
+	-f:modify the frame number(int) of background model training
 檔名：FXXX.txt (放在folder/txt_n內)
 連接法做完的label
 bounding box left

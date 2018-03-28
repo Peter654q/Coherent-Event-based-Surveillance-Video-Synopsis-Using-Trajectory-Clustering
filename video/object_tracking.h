@@ -16,7 +16,7 @@ int object_tracking(int argc, char* argv[]){
 	double array1[20][8];
 	double array2[20][8];
 	double out[20][8];
-	int frame = 70000;//00023.avi/00000.avi last frame number:66929/00004.avi:66598
+	int frame = 70000;
 	int counts_obj=0;
     
     counts_obj = init(25, counts_obj);
@@ -26,14 +26,12 @@ int object_tracking(int argc, char* argv[]){
 			fstream fp1;
 			stringstream ss1;
 			ss1 << "../" << folder << "/txt_t/F_out" << frameNumber-1 << ".txt";
-			//ss1 << "F55.txt";
 			string str1 = ss1.str();
 			fp1.open(str1.c_str(), ios::in);
 
 			fstream fp2;
 			stringstream ss2;
 			ss2 << "../" << folder << "/txt_n/F" << frameNumber << ".txt";
-			//ss2 << "F56.txt";
 			string str2 = ss2.str();
 			fp2.open(str2.c_str(), ios::in);
 			if(!fp2){
@@ -42,7 +40,6 @@ int object_tracking(int argc, char* argv[]){
 					fstream fp2;
 					stringstream ss2;
 					ss2 << "../" << folder << "/txt_n/F" << frameNumber << ".txt";
-					//ss2 << "F56.txt";
 					string str2 = ss2.str();
 					fp2.open(str2.c_str(), ios::in);
 					if(fp2){
@@ -73,7 +70,6 @@ int object_tracking(int argc, char* argv[]){
 				}
 
 				//compare two arrays
-
 				double nearest[2];
 				for(int j=0;j<20;j++){
 					nearest[0] = 10000;

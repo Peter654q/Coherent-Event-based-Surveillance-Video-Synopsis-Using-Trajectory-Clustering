@@ -184,8 +184,6 @@ int kalman (int argc, char* argv[])
                     int g = 255;
                     int r = 255;
                     circle(img,predict_pt, 5, CV_RGB(b ,g, r),3);
-                    //f_out <<obj_num << " " << predict_pt.x << " " << predict_pt.y <<" " << obj_status[i][5]<< " " << obj_status[i][6]<< endl;//if predict, output obj_num = -1
-                    //circle(img,predict_pt, 5, CV_RGB(255 ,255, 255),3);
                     check_array[pointer][i][0] = -1;
                     check_array[pointer][i][1] = obj_num;
                     check_array[pointer][i][2] = predict_pt.x;
@@ -200,8 +198,7 @@ int kalman (int argc, char* argv[])
                     int g = (obj_num*34)%200+55;
                     int r = (obj_num*45)%200+55;
                     circle(img,predict_pt, 5, CV_RGB(b ,g, r),3);
-                    //f_out << obj_num <<" " << predict_pt.x << " " << predict_pt.y <<" " << obj_status[i][5]<< " " << obj_status[i][6]<< endl;//if not predict, output obj_num
-                	check_array[pointer][i][0] = -3;
+                    check_array[pointer][i][0] = -3;
                     check_array[pointer][i][1] = obj_num;
                     check_array[pointer][i][2] = predict_pt.x;
                     check_array[pointer][i][3] = predict_pt.y;
@@ -243,27 +240,6 @@ int kalman (int argc, char* argv[])
         				}
         			}
         		}
-        		/*
-        		else if (check_array[pointer_temp][i][0] == -3){ 
-        		// check this object (which is not a predict point) is noise or not
-        			for (int k=0; k<20; k++){
-	        			if (check_array[(pointer_temp +5)%61][k][0] == -3 && check_array[(pointer_temp +5)%61][k][1] == check_array[pointer_temp][i][1]){
-	        			//if it can find , not a noise 
-	        				find_noise = false;
-	        				break;
-	        			}
-        			}
-        			if (find_noise == true){// if can't find in the future 5 frames, set the first attr to -1
-        				for (int j=0 ; j<6; j++){
-        					for (int k=0;k<20;k++ ){
-        						if (check_array[(pointer_temp+j)%61][k][1] == check_array[pointer_temp][i][1]){
-        							check_array[(pointer_temp+j)%61][k][0] = -1;
-        						}
-        					}
-        				}
-        			}
-        		}
-        		*/
         		if (check_array[pointer_temp][i][0] == -3){
         			int b = (check_array[pointer_temp][i][1]*23)%200+55;
                     int g = (check_array[pointer_temp][i][1]*34)%200+55;
