@@ -5,12 +5,12 @@ openCV 3.3.0, ubuntu14.04, GNU Make 3.81
 1. 先創立資料夾，其名稱和影片名稱相同(請去掉副檔名)
 裏面分別創建以下6個子資料夾
 (
-BG：放置背景圖片(main-opencv.cpp所使用)
-obj_n：放置未排序編號之物體圖片(main-opencv.cpp所使用)
-obj_t：放置排序後編號之物體圖片(video.cpp所使用)
-obj_txt：放置物體各自資訊之txt file(video.cpp所使用)
-txt_n：放置未tracking物體之txt file(main-opencv.cpp所使用)
-txt_t：放置初步tracling過後之txt file(object_tracking.cpp所使用)
+BG：放置背景圖片(main-opencv.cpp所使用)  
+obj_n：放置未排序編號之物體圖片(main-opencv.cpp所使用)  
+obj_t：放置排序後編號之物體圖片(video.cpp所使用)  
+obj_txt：放置物體各自資訊之txt file(video.cpp所使用)  
+txt_n：放置未tracking物體之txt file(main-opencv.cpp所使用)  
+txt_t：放置初步tracling過後之txt file(object_tracking.cpp所使用)  
 )
 
 2. main-opencv.cpp
